@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Acompanhamento de Campanhas</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #cbd5e1; margin: 0; padding: 20px; display: flex; gap: 20px; flex-direction: row-reverse; }
+        
+        /* Painel Lateral (Ranking) na DIREITA */
+        .sidebar { width: 300px; background: #1e293b; padding: 20px; border-radius: 12px; height: fit-content; border: 1px solid #334155; }
+        .sidebar h2 { color: #f8fafc; font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .rank-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .rank-pos { font-size: 1.5rem; font-weight: bold; color: #34d399; margin-right: 15px; }
+        .rank-info { flex: 1; }
+        .rank-month { font-weight: bold; color: #f8fafc; }
+        .rank-value { font-size: 0.85rem; color: #94a3b8; }
+
+        /* Painel Principal */
+        .main-panel { flex: 1; }
+        .header { margin-bottom: 20px; }
+        .header h1 { color: #f8fafc; margin: 0; }
+        .header p { color: #94a3b8; margin: 5px 0; }
+        
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; position: relative; }
+        .card-header { display: flex; justify-content: space-between; align-items: start; }
+        .month-name { font-size: 1.5rem; font-weight: bold; color: #f8fafc; }
+        .month-tag { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #94a3b8; }
+        .total-value { font-size: 2rem; font-weight: bold; color: #34d399; margin: 15px 0; }
+        .metric { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.95rem; }
+        .metric-label { color: #94a3b8; }
+        .metric-val { color: #f8fafc; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Ranking de Vendas</h2>
+        <div class="rank-item">
+            <span class="rank-pos">1º</span>
+            <div class="rank-info"><div class="rank-month">Julho</div><div class="rank-value">R$ 129.695,84</div></div>
+        </div>
+        <div class="rank-item">
+            <span class="rank-pos">2º</span>
+            <div class="rank-info"><div class="rank-month">Maio</div><div class="rank-value">R$ 65.850,04</div></div>
+        </div>
+        <div class="rank-item">
+            <span class="rank-pos">3º</span>
+            <div class="rank-info"><div class="rank-month">Agosto</div><div class="rank-value">R$ 32.819,73</div></div>
+        </div>
+    </div>
+
+    <div class="main-panel">
+        <div class="header">
+            <h1>Acompanhamento de Campanhas de 1 Dia</h1>
+            <p>Monitoramento mensal de performance - 2026</p>
+        </div>
+        <div class="grid">
+            <script>
+                const data = [
+                    {m: "Maio", a: "5.5", v: "R$ 65.850,04", c: 507, i: 463},
+                    {m: "Junho", a: "6.6", v: "R$ 22.984,95", c: 229, i: 1830},
+                    {m: "Julho", a: "7.7", v: "R$ 129.695,84", c: 630, i: 12072},
+                    {m: "Agosto", a: "8.8", v: "R$ 32.819,73", c: 183, i: 901},
+                    {m: "Setembro", a: "9.9", v: "R$ 0,00", c: 0, i: 0},
+                    {m: "Outubro", a: "10.10", v: "R$ 0,00", c: 0, i: 0},
+                    {m: "Novembro", a: "11.11", v: "R$ 0,00", c: 0, i: 0},
+                    {m: "Dezembro", a: "12.12", v: "R$ 0,00", c: 0, i: 0}
+                ];
+                data.forEach(d => {
+                    document.write(`
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="month-name">${d.m}</span>
+                                <span class="month-tag">${d.a}</span>
+                            </div>
+                            <div class="total-value">${d.v}</div>
+                            <div class="metric"><span class="metric-label">Qtd. de Compras</span><span class="metric-val">${d.c}</span></div>
+                            <div class="metric"><span class="metric-label">Qtd. de Itens</span><span class="metric-val">${d.i}</span></div>
+                        </div>
+                    `);
+                });
+            </script>
+        </div>
+    </div>
+</body>
+</html>
