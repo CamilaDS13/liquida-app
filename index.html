@@ -4,84 +4,134 @@
     <meta charset="UTF-8">
     <title>Acompanhamento de Campanhas</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #cbd5e1; margin: 0; padding: 20px; display: flex; gap: 20px; flex-direction: row-reverse; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #cbd5e1; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
-        /* Painel Lateral (Ranking) na DIREITA */
-        .sidebar { width: 300px; background: #1e293b; padding: 20px; border-radius: 12px; height: fit-content; border: 1px solid #334155; }
-        .sidebar h2 { color: #f8fafc; font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .rank-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-        .rank-pos { font-size: 1.5rem; font-weight: bold; color: #34d399; margin-right: 15px; }
-        .rank-info { flex: 1; }
-        .rank-month { font-weight: bold; color: #f8fafc; }
-        .rank-value { font-size: 0.85rem; color: #94a3b8; }
+        /* Painel Superior Único */
+        .top-dashboard { background: #1e293b; padding: 20px 25px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 20px; align-items: center; }
+        
+        .summary-item { display: flex; flex-direction: column; justify-content: center; }
+        .summary-label { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .summary-val { font-size: 1.6rem; font-weight: bold; color: #fbbf24; }
+        
+        .legend-box { display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #334155; border-right: 1px solid #334155; padding: 0 20px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #94a3b8; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
 
-        /* Painel Principal */
-        .main-panel { flex: 1; }
-        .header { margin-bottom: 20px; }
-        .header h1 { color: #f8fafc; margin: 0; }
-        .header p { color: #94a3b8; margin: 5px 0; }
+        .top-ranking { display: flex; flex-direction: column; gap: 8px; }
+        .top-ranking-title { font-size: 0.85rem; color: #f8fafc; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
+        .rank-mini-list { display: flex; justify-content: space-between; gap: 10px; }
+        .rank-mini-item { font-size: 0.8rem; color: #94a3b8; }
+        .rank-mini-item span { color: #34d399; font-weight: bold; }
+
+        /* Grid dos Cards dos Meses (4 colunas) */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; position: relative; }
-        .card-header { display: flex; justify-content: space-between; align-items: start; }
-        .month-name { font-size: 1.5rem; font-weight: bold; color: #f8fafc; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; transition: transform 0.2s; }
+        .card-destaque { background: #064e3b !important; border-color: #059669 !important; }
+        .card-ruim { background: #7f1d1d !important; border-color: #dc2626 !important; }
+        
+        .month-name { font-size: 1.3rem; font-weight: bold; color: #f8fafc; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .month-tag { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #94a3b8; }
-        .total-value { font-size: 2rem; font-weight: bold; color: #34d399; margin: 15px 0; }
-        .metric { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.95rem; }
-        .metric-label { color: #94a3b8; }
-        .metric-val { color: #f8fafc; font-weight: bold; }
+        .card-destaque .month-tag { background: #047857; color: #ecfdf5; }
+        .card-ruim .month-tag { background: #991b1b; color: #fee2e2; }
+
+        .section-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
+        .card-destaque .section-box { background: #022c22; border-color: #047857; }
+        .card-ruim .section-box { background: #450a0a; border-color: #b91c1c; }
+
+        .section-title { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; font-weight: bold; }
+        
+        .metric-row { display: flex; flex-direction: column; margin-bottom: 8px; font-size: 0.9rem; }
+        .metric-label-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .metric-label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+        .metric-percent { color: #fbbf24; font-size: 0.75rem; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 1px 5px; border-radius: 4px; }
+        
+        .metric-val { color: #f8fafc; font-weight: bold; font-size: 1.05rem; white-space: nowrap; }
+        
+        .val-promocoes { color: #34d399; }
+        .val-geral { color: #38bdf8; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Painel Superior Unificado -->
+        <div class="top-dashboard">
+            <div class="summary-item">
+                <span class="summary-label">Venda Geral Acumulada</span>
+                <span class="summary-val" style="color: #38bdf8;">R$ 360.005,78</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Total Promocionado</span>
+                <span class="summary-val">R$ 251.350,56</span>
+            </div>
+            <div class="legend-box">
+                <div class="legend-item"><div class="dot" style="background:#059669;"></div><span>Melhor Performance</span></div>
+                <div class="legend-item"><div class="dot" style="background:#dc2626;"></div><span>Pior Performance</span></div>
+            </div>
+            <div class="top-ranking">
+                <div class="top-ranking-title">Ranking de Vendas</div>
+                <div class="rank-mini-list">
+                    <div class="rank-mini-item"><span>1º</span> Julho</div>
+                    <div class="rank-mini-item"><span>2º</span> Maio</div>
+                    <div class="rank-mini-item"><span>3º</span> Agosto</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="sidebar">
-        <h2>Ranking de Vendas</h2>
-        <div class="rank-item">
-            <span class="rank-pos">1º</span>
-            <div class="rank-info"><div class="rank-month">Julho</div><div class="rank-value">R$ 129.695,84</div></div>
-        </div>
-        <div class="rank-item">
-            <span class="rank-pos">2º</span>
-            <div class="rank-info"><div class="rank-month">Maio</div><div class="rank-value">R$ 65.850,04</div></div>
-        </div>
-        <div class="rank-item">
-            <span class="rank-pos">3º</span>
-            <div class="rank-info"><div class="rank-month">Agosto</div><div class="rank-value">R$ 32.819,73</div></div>
+        <!-- Grid de Meses -->
+        <div class="grid" id="grid">
         </div>
     </div>
-
-    <div class="main-panel">
-        <div class="header">
-            <h1>Acompanhamento de Campanhas de 1 Dia</h1>
-            <p>Monitoramento mensal de performance - 2026</p>
-        </div>
-        <div class="grid">
-            <script>
-                const data = [
-                    {m: "Maio", a: "5.5", v: "R$ 65.850,04", c: 507, i: 463},
-                    {m: "Junho", a: "6.6", v: "R$ 22.984,95", c: 229, i: 1830},
-                    {m: "Julho", a: "7.7", v: "R$ 129.695,84", c: 630, i: 12072},
-                    {m: "Agosto", a: "8.8", v: "R$ 32.819,73", c: 183, i: 901},
-                    {m: "Setembro", a: "9.9", v: "R$ 0,00", c: 0, i: 0},
-                    {m: "Outubro", a: "10.10", v: "R$ 0,00", c: 0, i: 0},
-                    {m: "Novembro", a: "11.11", v: "R$ 0,00", c: 0, i: 0},
-                    {m: "Dezembro", a: "12.12", v: "R$ 0,00", c: 0, i: 0}
-                ];
-                data.forEach(d => {
-                    document.write(`
-                        <div class="card">
-                            <div class="card-header">
-                                <span class="month-name">${d.m}</span>
-                                <span class="month-tag">${d.a}</span>
-                            </div>
-                            <div class="total-value">${d.v}</div>
-                            <div class="metric"><span class="metric-label">Qtd. de Compras</span><span class="metric-val">${d.c}</span></div>
-                            <div class="metric"><span class="metric-label">Qtd. de Itens</span><span class="metric-val">${d.i}</span></div>
+    
+    <script>
+        const data = [
+            {"m": "Maio", "a": "5.5", "res": "R$ 63.291,01", "desc": "R$ 40.167,36", "perc": "63.5%", "qtd": "2.245", "gV": "R$ 86.891,80", "gC": 505, "status": ""},
+            {"m": "Junho", "a": "6.6", "res": "R$ 22.984,95", "desc": "R$ 12.754,50", "perc": "55.5%", "qtd": "1.886", "gV": "R$ 49.411,44", "gC": 301, "status": "card-ruim"},
+            {"m": "Julho", "a": "7.7", "res": "R$ 128.679,60", "desc": "R$ 64.730,77", "perc": "50.3%", "qtd": "12.542", "gV": "R$ 161.651,44", "gC": 682, "status": "card-destaque"},
+            {"m": "Agosto", "a": "8.8", "res": "R$ 32.408,97", "desc": "R$ 16.670,06", "perc": "51.4%", "qtd": "887", "gV": "R$ 62.051,10", "gC": 272, "status": ""}
+        ];
+        
+        const grid = document.getElementById('grid');
+        data.forEach(d => {
+            grid.innerHTML += `
+                <div class="card ${d.status}">
+                    <div class="month-name">
+                        <span>${d.m}</span>
+                        <span class="month-tag">${d.a}</span>
+                    </div>
+                    <div class="section-box">
+                        <div class="section-title">Itens Promocionados</div>
+                        <div class="metric-row">
+                            <span class="metric-label">Resultado da Ação</span>
+                            <span class="metric-val val-promocoes">${d.res}</span>
                         </div>
-                    `);
-                });
-            </script>
-        </div>
-    </div>
+                        <div class="metric-row">
+                            <div class="metric-label-container">
+                                <span class="metric-label">Desconto Aplicado</span>
+                                <span class="metric-percent">${d.perc}</span>
+                            </div>
+                            <span class="metric-val" style="color: #f87171;">${d.desc}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Qtd de Itens</span>
+                            <span class="metric-val">${d.qtd}</span>
+                        </div>
+                    </div>
+                    <div class="section-box">
+                        <div class="section-title">Venda Geral do Dia</div>
+                        <div class="metric-row">
+                            <span class="metric-label">Valor</span>
+                            <span class="metric-val val-geral">${d.gV}</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Compras</span>
+                            <span class="metric-val">${d.gC}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
 </body>
 </html>
