@@ -2,136 +2,273 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Acompanhamento de Campanhas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datas Dobradas - Pinheiro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0f172a; color: #cbd5e1; margin: 0; padding: 20px; }
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-main: #ffffff;
+            --text-dim: #a1a1aa;
+            --blue: #38bdf8;
+            --yellow: #fbbf24;
+            --green: #22c55e;
+            --red: #ef4444;
+            --border: #30363d;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
         .container { max-width: 1400px; margin: 0 auto; }
-        
-        /* Painel Superior Único */
-        .top-dashboard { background: #1e293b; padding: 20px 25px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 20px; align-items: center; }
-        
-        .summary-item { display: flex; flex-direction: column; justify-content: center; }
-        .summary-label { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-        .summary-val { font-size: 1.6rem; font-weight: bold; color: #fbbf24; }
-        
-        .legend-box { display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #334155; border-right: 1px solid #334155; padding: 0 20px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #94a3b8; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
 
-        .top-ranking { display: flex; flex-direction: column; gap: 8px; }
-        .top-ranking-title { font-size: 0.85rem; color: #f8fafc; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
-        .rank-mini-list { display: flex; justify-content: space-between; gap: 10px; }
-        .rank-mini-item { font-size: 0.8rem; color: #94a3b8; }
-        .rank-mini-item span { color: #34d399; font-weight: bold; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
 
-        /* Grid dos Cards dos Meses (4 colunas) */
+        .sub-header { color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; }
+        h1 { font-size: 2.2rem; margin: 5px 0 15px 0; font-weight: 800; }
+
+        .status-badges { display: flex; gap: 10px; }
+        .badge {
+            background: #21262d;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .dot { height: 10px; width: 10px; border-radius: 50%; background-color: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* Painel Superior */
+        .top-dashboard {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1fr 0.8fr 1.2fr;
+            gap: 30px;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        .summary-item { display: flex; flex-direction: column; }
+        .summary-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+        .summary-val { font-size: 1.8rem; font-weight: 800; }
+
+        .legend-box { border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 25px; display: flex; flex-direction: column; gap: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--text-dim); }
+        .status-circle { width: 10px; height: 10px; border-radius: 50%; }
+
+        .ranking-box { display: flex; flex-direction: column; }
+        .ranking-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
+        .rank-list { display: flex; justify-content: space-between; }
+        .rank-item { font-size: 0.85rem; color: var(--text-dim); }
+        .rank-item b { color: var(--green); margin-right: 4px; }
+
+        /* Grid */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; transition: transform 0.2s; }
-        .card-destaque { background: #064e3b !important; border-color: #059669 !important; }
-        .card-ruim { background: #7f1d1d !important; border-color: #dc2626 !important; }
-        
-        .month-name { font-size: 1.3rem; font-weight: bold; color: #f8fafc; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .month-tag { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; color: #94a3b8; }
-        .card-destaque .month-tag { background: #047857; color: #ecfdf5; }
-        .card-ruim .month-tag { background: #991b1b; color: #fee2e2; }
 
-        .section-box { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
-        .card-destaque .section-box { background: #022c22; border-color: #047857; }
-        .card-ruim .section-box { background: #450a0a; border-color: #b91c1c; }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
 
-        .section-title { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; font-weight: bold; }
-        
-        .metric-row { display: flex; flex-direction: column; margin-bottom: 8px; font-size: 0.9rem; }
-        .metric-label-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-        .metric-label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
-        .metric-percent { color: #fbbf24; font-size: 0.75rem; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 1px 5px; border-radius: 4px; }
-        
-        .metric-val { color: #f8fafc; font-weight: bold; font-size: 1.05rem; white-space: nowrap; }
-        
-        .val-promocoes { color: #34d399; }
-        .val-geral { color: #38bdf8; }
+        .card.best { border-color: var(--green); background: linear-gradient(145deg, #064e3b, #161b22); }
+        .card.worst { border-color: var(--red); background: linear-gradient(145deg, #7f1d1d, #161b22); }
+
+        .month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .month-name { font-size: 1.4rem; font-weight: 800; }
+        .action-tag { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+
+        .section { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .section-title { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; font-weight: 800; letter-spacing: 1px; }
+
+        .metric { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .metric-label-row { display: flex; justify-content: space-between; align-items: center; }
+        .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .val { font-size: 1.1rem; font-weight: 700; }
+        .perc-tag { font-size: 0.7rem; background: rgba(251, 191, 36, 0.2); color: var(--yellow); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        .btn-export {
+            background: var(--green); color: white; border: none; padding: 12px 20px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;
+        }
+
+        @media (max-width: 1200px) { .grid { grid-template-columns: repeat(2, 1fr); } .top-dashboard { grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- Painel Superior Unificado -->
+        <header>
+            <div>
+                <div class="sub-header">Central de Inteligência Operacional</div>
+                <h1>DATAS DOBRADAS PINHEIRO</h1>
+                <div class="status-badges">
+                    <div class="badge"><span class="dot"></span> Sistema Online</div>
+                    <div id="sync-badge" class="badge"><i class="fas fa-sync fa-spin"></i> Sincronizando...</div>
+                </div>
+            </div>
+            <button class="btn-export" onclick="exportExcel()">
+                <i class="fas fa-file-excel"></i> Exportar Excel
+            </button>
+        </header>
+
         <div class="top-dashboard">
             <div class="summary-item">
                 <span class="summary-label">Venda Geral Acumulada</span>
-                <span class="summary-val" style="color: #38bdf8;">R$ 360.005,78</span>
+                <span class="summary-val" style="color: var(--blue);" id="total-geral">R$ 0,00</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Total Promocionado</span>
-                <span class="summary-val">R$ 251.350,56</span>
+                <span class="summary-val" style="color: var(--yellow);" id="total-promocionado">R$ 0,00</span>
             </div>
             <div class="legend-box">
-                <div class="legend-item"><div class="dot" style="background:#059669;"></div><span>Melhor Performance</span></div>
-                <div class="legend-item"><div class="dot" style="background:#dc2626;"></div><span>Pior Performance</span></div>
+                <div class="legend-item"><div class="status-circle" style="background: var(--green);"></div> Melhor Performance</div>
+                <div class="legend-item"><div class="status-circle" style="background: var(--red);"></div> Pior Performance</div>
             </div>
-            <div class="top-ranking">
-                <div class="top-ranking-title">Ranking de Vendas</div>
-                <div class="rank-mini-list">
-                    <div class="rank-mini-item"><span>1º</span> Julho</div>
-                    <div class="rank-mini-item"><span>2º</span> Maio</div>
-                    <div class="rank-mini-item"><span>3º</span> Agosto</div>
+            <div class="ranking-box">
+                <div class="ranking-title">Ranking de Vendas (Promoção)</div>
+                <div class="rank-list" id="rank-list">
+                    <!-- Gerado via JS -->
                 </div>
             </div>
         </div>
 
-        <!-- Grid de Meses -->
-        <div class="grid" id="grid">
+        <div class="grid" id="main-grid">
+            <!-- Cards gerados via JS -->
         </div>
     </div>
-    
+
     <script>
-        const data = [
-            {"m": "Maio", "a": "5.5", "res": "R$ 63.291,01", "desc": "R$ 40.167,36", "perc": "63.5%", "qtd": "2.245", "gV": "R$ 86.891,80", "gC": 505, "status": ""},
-            {"m": "Junho", "a": "6.6", "res": "R$ 22.984,95", "desc": "R$ 12.754,50", "perc": "55.5%", "qtd": "1.886", "gV": "R$ 49.411,44", "gC": 301, "status": "card-ruim"},
-            {"m": "Julho", "a": "7.7", "res": "R$ 128.679,60", "desc": "R$ 64.730,77", "perc": "50.3%", "qtd": "12.542", "gV": "R$ 161.651,44", "gC": 682, "status": "card-destaque"},
-            {"m": "Agosto", "a": "8.8", "res": "R$ 32.408,97", "desc": "R$ 16.670,06", "perc": "51.4%", "qtd": "887", "gV": "R$ 62.051,10", "gC": 272, "status": ""}
-        ];
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR7cnxA3Ag7GTig-JxsgqHjEQBnginQaA7mgAzXF1TtsPWV3tPEgVJAtIfw36jh6BRP0ZUtQv72SwEi/pub?output=csv';
         
-        const grid = document.getElementById('grid');
-        data.forEach(d => {
-            grid.innerHTML += `
-                <div class="card ${d.status}">
-                    <div class="month-name">
-                        <span>${d.m}</span>
-                        <span class="month-tag">${d.a}</span>
-                    </div>
-                    <div class="section-box">
-                        <div class="section-title">Itens Promocionados</div>
-                        <div class="metric-row">
-                            <span class="metric-label">Resultado da Ação</span>
-                            <span class="metric-val val-promocoes">${d.res}</span>
+        function parseNum(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            let clean = val.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+            return parseFloat(clean) || 0;
+        }
+
+        async function fetchData() {
+            Papa.parse(SHEET_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => render(results.data)
+            });
+        }
+
+        function render(data) {
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = '';
+
+            let somaGeral = 0;
+            let somaPromo = 0;
+
+            // Encontrar melhor e pior para destaque
+            const valoresPromo = data.map(d => parseNum(d['RESULTADO ACAO']));
+            const maxVal = Math.max(...valoresPromo);
+            const minVal = Math.min(...valoresPromo);
+
+            // Ordenar para ranking
+            const sorted = [...data].sort((a,b) => parseNum(b['RESULTADO ACAO']) - parseNum(a['RESULTADO ACAO']));
+            const rankDiv = document.getElementById('rank-list');
+            rankDiv.innerHTML = sorted.slice(0, 3).map((d, i) => 
+                `<div class="rank-item"><b>${i+1}º</b> ${d.MES}</div>`
+            ).join('');
+
+            data.forEach(d => {
+                const resAcao = parseNum(d['RESULTADO ACAO']);
+                const vGeral = parseNum(d['VENDA GERAL DIA']);
+                somaGeral += vGeral;
+                somaPromo += resAcao;
+
+                const isBest = resAcao === maxVal;
+                const isWorst = resAcao === minVal;
+
+                grid.innerHTML += `
+                    <div class="card ${isBest ? 'best' : ''} ${isWorst ? 'worst' : ''}">
+                        <div class="month-header">
+                            <span class="month-name">${d.MES}</span>
+                            <span class="action-tag">${d.ACAO || '-'}</span>
                         </div>
-                        <div class="metric-row">
-                            <div class="metric-label-container">
-                                <span class="metric-label">Desconto Aplicado</span>
-                                <span class="metric-percent">${d.perc}</span>
+
+                        <div class="section">
+                            <div class="section-title">Itens Promocionados</div>
+                            <div class="metric">
+                                <span class="label">Resultado da Ação</span>
+                                <span class="val" style="color: var(--green)">${resAcao.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
                             </div>
-                            <span class="metric-val" style="color: #f87171;">${d.desc}</span>
+                            <div class="metric">
+                                <div class="metric-label-row">
+                                    <span class="label">Desconto Aplicado</span>
+                                    <span class="perc-tag">${d['DESCONTO %'] || '0%'}</span>
+                                </div>
+                                <span class="val" style="color: var(--red)">${d['VALOR DESCONTO']}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Qtd de Itens</span>
+                                <span class="val">${d['QTD ITENS']}</span>
+                            </div>
                         </div>
-                        <div class="metric-row">
-                            <span class="metric-label">Qtd de Itens</span>
-                            <span class="metric-val">${d.qtd}</span>
+
+                        <div class="section">
+                            <div class="section-title">Venda Geral do Dia</div>
+                            <div class="metric">
+                                <span class="label">Valor Total</span>
+                                <span class="val" style="color: var(--blue)">${vGeral.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Total Compras</span>
+                                <span class="val">${d['COMPRAS']}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="section-box">
-                        <div class="section-title">Venda Geral do Dia</div>
-                        <div class="metric-row">
-                            <span class="metric-label">Valor</span>
-                            <span class="metric-val val-geral">${d.gV}</span>
-                        </div>
-                        <div class="metric-row">
-                            <span class="metric-label">Compras</span>
-                            <span class="metric-val">${d.gC}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
+                `;
+            });
+
+            document.getElementById('total-geral').innerText = somaGeral.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+            document.getElementById('total-promocionado').innerText = somaPromo.toLocaleString('pt-br',{style:'currency',currency:'BRL'});
+            document.getElementById('sync-badge').innerHTML = `<i class="far fa-clock"></i> Atualizado: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function exportExcel() {
+            const table = document.getElementById("main-grid");
+            const wb = XLSX.utils.book_new();
+            // Aqui convertemos os dados brutos para o excel
+            fetch(SHEET_URL).then(res => res.text()).then(csv => {
+                const results = Papa.parse(csv, {header:true});
+                const ws = XLSX.utils.json_to_sheet(results.data);
+                XLSX.utils.book_append_sheet(wb, ws, "DatasDobradas");
+                XLSX.writeFile(wb, "Relatorio_Datas_Dobradas.xlsx");
+            });
+        }
+
+        fetchData();
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>
