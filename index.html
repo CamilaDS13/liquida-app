@@ -38,7 +38,7 @@
         }
 
         .sub-header { color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; }
-        h1 { font-size: 2.2rem; margin: 5px 0 15px 0; font-weight: 800; }
+        h1 { font-size: 2.2rem; margin: 5px 0 10px 0; font-weight: 800; }
 
         .status-badges { display: flex; gap: 10px; }
         .badge {
@@ -92,23 +92,21 @@
             padding: 20px;
             transition: 0.3s;
             position: relative;
-            overflow: hidden;
         }
 
-        .card.best { border-color: var(--green); background: linear-gradient(145deg, #064e3b, #161b22); }
-        .card.worst { border-color: var(--red); background: linear-gradient(145deg, #7f1d1d, #161b22); }
+        .card.best { border-color: var(--green); background: linear-gradient(145deg, #064e3b, #161b22); border-width: 2px; }
+        .card.worst { border-color: var(--red); background: linear-gradient(145deg, #7f1d1d, #161b22); border-width: 2px; }
 
         .month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .month-name { font-size: 1.4rem; font-weight: 800; }
-        .action-tag { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .month-name { font-size: 1.5rem; font-weight: 800; }
 
-        .section { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .section-title { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 10px; font-weight: 800; letter-spacing: 1px; }
+        .section { background: rgba(0,0,0,0.25); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .section-title { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 12px; font-weight: 800; letter-spacing: 1px; }
 
-        .metric { display: flex; flex-direction: column; margin-bottom: 8px; }
-        .metric-label-row { display: flex; justify-content: space-between; align-items: center; }
+        .metric { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .metric-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
-        .val { font-size: 1.1rem; font-weight: 700; }
+        .val { font-size: 1.15rem; font-weight: 700; }
         .perc-tag { font-size: 0.7rem; background: rgba(251, 191, 36, 0.2); color: var(--yellow); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
         .btn-export {
@@ -150,16 +148,12 @@
                 <div class="legend-item"><div class="status-circle" style="background: var(--red);"></div> Pior Performance</div>
             </div>
             <div class="ranking-box">
-                <div class="ranking-title">Ranking de Vendas (Promoção)</div>
-                <div class="rank-list" id="rank-list">
-                    <!-- Gerado via JS -->
-                </div>
+                <div class="ranking-title">Ranking de Vendas (Ação)</div>
+                <div class="rank-list" id="rank-list"></div>
             </div>
         </div>
 
-        <div class="grid" id="main-grid">
-            <!-- Cards gerados via JS -->
-        </div>
+        <div class="grid" id="main-grid"></div>
     </div>
 
     <script>
@@ -168,7 +162,8 @@
         function parseNum(val) {
             if (!val) return 0;
             if (typeof val === 'number') return val;
-            let clean = val.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+            // Limpa R$, pontos de milhar e troca vírgula decimal por ponto
+            let clean = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
             return parseFloat(clean) || 0;
         }
 
@@ -188,50 +183,59 @@
             let somaGeral = 0;
             let somaPromo = 0;
 
-            // Encontrar melhor e pior para destaque
-            const valoresPromo = data.map(d => parseNum(d['RESULTADO ACAO']));
+            // Extração de dados com base nas colunas exatas do print
+            const processados = data.map(d => ({
+                mes: d['MES'],
+                resAcao: parseNum(d['RESULTADO DA AÇÃO']),
+                desconto: parseNum(d['DESCONTO APLICADO']),
+                qtdItens: d['QTD DE ITENS'],
+                vGeral: parseNum(d['VENDA GERAL DO DIA']),
+                qtdCompras: d['QTD DE COMPRAS']
+            }));
+
+            // Encontrar melhor e pior
+            const valoresPromo = processados.map(p => p.resAcao);
             const maxVal = Math.max(...valoresPromo);
             const minVal = Math.min(...valoresPromo);
 
-            // Ordenar para ranking
-            const sorted = [...data].sort((a,b) => parseNum(b['RESULTADO ACAO']) - parseNum(a['RESULTADO ACAO']));
-            const rankDiv = document.getElementById('rank-list');
-            rankDiv.innerHTML = sorted.slice(0, 3).map((d, i) => 
-                `<div class="rank-item"><b>${i+1}º</b> ${d.MES}</div>`
+            // Ranking
+            const sorted = [...processados].sort((a,b) => b.resAcao - a.resAcao);
+            document.getElementById('rank-list').innerHTML = sorted.slice(0, 3).map((p, i) => 
+                `<div class="rank-item"><b>${i+1}º</b> ${p.mes}</div>`
             ).join('');
 
-            data.forEach(d => {
-                const resAcao = parseNum(d['RESULTADO ACAO']);
-                const vGeral = parseNum(d['VENDA GERAL DIA']);
-                somaGeral += vGeral;
-                somaPromo += resAcao;
+            processados.forEach(p => {
+                somaGeral += p.vGeral;
+                somaPromo += p.resAcao;
 
-                const isBest = resAcao === maxVal;
-                const isWorst = resAcao === minVal;
+                const isBest = p.resAcao === maxVal && maxVal !== 0;
+                const isWorst = p.resAcao === minVal && minVal !== maxVal;
+                
+                // Cálculo de % de desconto automático
+                const perc = p.resAcao > 0 ? ((p.desconto / p.resAcao) * 100).toFixed(1) : 0;
 
                 grid.innerHTML += `
                     <div class="card ${isBest ? 'best' : ''} ${isWorst ? 'worst' : ''}">
                         <div class="month-header">
-                            <span class="month-name">${d.MES}</span>
-                            <span class="action-tag">${d.ACAO || '-'}</span>
+                            <span class="month-name">${p.mes}</span>
                         </div>
 
                         <div class="section">
                             <div class="section-title">Itens Promocionados</div>
                             <div class="metric">
                                 <span class="label">Resultado da Ação</span>
-                                <span class="val" style="color: var(--green)">${resAcao.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
+                                <span class="val" style="color: var(--green)">${p.resAcao.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
                             </div>
                             <div class="metric">
                                 <div class="metric-label-row">
                                     <span class="label">Desconto Aplicado</span>
-                                    <span class="perc-tag">${d['DESCONTO %'] || '0%'}</span>
+                                    <span class="perc-tag">${perc}%</span>
                                 </div>
-                                <span class="val" style="color: var(--red)">${d['VALOR DESCONTO']}</span>
+                                <span class="val" style="color: var(--red)">${p.desconto.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
                             </div>
                             <div class="metric">
                                 <span class="label">Qtd de Itens</span>
-                                <span class="val">${d['QTD ITENS']}</span>
+                                <span class="val">${p.qtdItens?.toLocaleString('pt-br') || 0}</span>
                             </div>
                         </div>
 
@@ -239,11 +243,11 @@
                             <div class="section-title">Venda Geral do Dia</div>
                             <div class="metric">
                                 <span class="label">Valor Total</span>
-                                <span class="val" style="color: var(--blue)">${vGeral.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
+                                <span class="val" style="color: var(--blue)">${p.vGeral.toLocaleString('pt-br',{style:'currency',currency:'BRL'})}</span>
                             </div>
                             <div class="metric">
                                 <span class="label">Total Compras</span>
-                                <span class="val">${d['COMPRAS']}</span>
+                                <span class="val">${p.qtdCompras?.toLocaleString('pt-br') || 0}</span>
                             </div>
                         </div>
                     </div>
@@ -256,13 +260,11 @@
         }
 
         function exportExcel() {
-            const table = document.getElementById("main-grid");
-            const wb = XLSX.utils.book_new();
-            // Aqui convertemos os dados brutos para o excel
             fetch(SHEET_URL).then(res => res.text()).then(csv => {
                 const results = Papa.parse(csv, {header:true});
                 const ws = XLSX.utils.json_to_sheet(results.data);
-                XLSX.utils.book_append_sheet(wb, ws, "DatasDobradas");
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Dados");
                 XLSX.writeFile(wb, "Relatorio_Datas_Dobradas.xlsx");
             });
         }
