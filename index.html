@@ -38,7 +38,7 @@
         }
 
         .sub-header { color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; }
-        h1 { font-size: 2.2rem; margin: 5px 0 10px 0; font-weight: 800; }
+        h1 { font-size: 2.2rem; margin: 5px 0 15px 0; font-weight: 800; }
 
         .status-badges { display: flex; gap: 10px; }
         .badge {
@@ -62,7 +62,7 @@
             border-radius: 16px;
             border: 1px solid var(--border);
             display: grid;
-            grid-template-columns: 1fr 1fr 0.8fr 1.2fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr; /* Ajustado para dar mais espaço */
             gap: 30px;
             margin-bottom: 25px;
             align-items: center;
@@ -72,9 +72,17 @@
         .summary-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
         .summary-val { font-size: 1.8rem; font-weight: 800; }
 
-        .legend-box { border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 25px; display: flex; flex-direction: column; gap: 8px; }
-        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--text-dim); }
+        .legend-box { border-left: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0 25px; display: flex; flex-direction: column; }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-main); margin-bottom: 5px; }
         .status-circle { width: 10px; height: 10px; border-radius: 50%; }
+        
+        .legend-desc { 
+            font-size: 0.65rem; 
+            color: var(--text-dim); 
+            line-height: 1.4; 
+            margin-top: 8px; 
+            font-style: italic; 
+        }
 
         .ranking-box { display: flex; flex-direction: column; }
         .ranking-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
@@ -146,6 +154,8 @@
             <div class="legend-box">
                 <div class="legend-item"><div class="status-circle" style="background: var(--green);"></div> Melhor Performance</div>
                 <div class="legend-item"><div class="status-circle" style="background: var(--red);"></div> Pior Performance</div>
+                <!-- TEXTO DE EXPLICAÇÃO ADICIONADO AQUI -->
+                <div class="legend-desc">A métrica de performance (cores) é definida automaticamente com base no <b>Resultado da Ação</b>.</div>
             </div>
             <div class="ranking-box">
                 <div class="ranking-title">Ranking de Vendas (Ação)</div>
@@ -162,7 +172,6 @@
         function parseNum(val) {
             if (!val) return 0;
             if (typeof val === 'number') return val;
-            // Limpa R$, pontos de milhar e troca vírgula decimal por ponto
             let clean = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
             return parseFloat(clean) || 0;
         }
@@ -183,7 +192,6 @@
             let somaGeral = 0;
             let somaPromo = 0;
 
-            // Extração de dados com base nas colunas exatas do print
             const processados = data.map(d => ({
                 mes: d['MES'],
                 resAcao: parseNum(d['RESULTADO DA AÇÃO']),
@@ -193,12 +201,10 @@
                 qtdCompras: d['QTD DE COMPRAS']
             }));
 
-            // Encontrar melhor e pior
             const valoresPromo = processados.map(p => p.resAcao);
             const maxVal = Math.max(...valoresPromo);
             const minVal = Math.min(...valoresPromo);
 
-            // Ranking
             const sorted = [...processados].sort((a,b) => b.resAcao - a.resAcao);
             document.getElementById('rank-list').innerHTML = sorted.slice(0, 3).map((p, i) => 
                 `<div class="rank-item"><b>${i+1}º</b> ${p.mes}</div>`
@@ -211,7 +217,6 @@
                 const isBest = p.resAcao === maxVal && maxVal !== 0;
                 const isWorst = p.resAcao === minVal && minVal !== maxVal;
                 
-                // Cálculo de % de desconto automático
                 const perc = p.resAcao > 0 ? ((p.desconto / p.resAcao) * 100).toFixed(1) : 0;
 
                 grid.innerHTML += `
