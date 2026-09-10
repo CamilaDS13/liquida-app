@@ -62,7 +62,7 @@
             border-radius: 16px;
             border: 1px solid var(--border);
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr; /* Ajustado para dar mais espaço */
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 30px;
             margin-bottom: 25px;
             align-items: center;
@@ -90,7 +90,73 @@
         .rank-item { font-size: 0.85rem; color: var(--text-dim); }
         .rank-item b { color: var(--green); margin-right: 4px; }
 
-        /* Grid */
+        /* NOVO PAINEL DE CRESCIMENTO (MÊS ATUAL vs ANTERIOR) */
+        .growth-panel {
+            margin-bottom: 25px;
+        }
+        .growth-header-title {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+        .growth-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .growth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .growth-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .growth-card-label {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .growth-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .growth-badge.pos { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+        .growth-badge.neg { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .growth-values {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+        .growth-compare {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        /* Grid dos Meses */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 
         .card {
@@ -122,7 +188,15 @@
             cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;
         }
 
-        @media (max-width: 1200px) { .grid { grid-template-columns: repeat(2, 1fr); } .top-dashboard { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 1200px) { 
+            .grid { grid-template-columns: repeat(2, 1fr); } 
+            .top-dashboard { grid-template-columns: 1fr 1fr; } 
+            .growth-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 650px) {
+            .growth-grid { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -142,6 +216,7 @@
             </button>
         </header>
 
+        <!-- PAINEL SUPERIOR RESUMO GERAL -->
         <div class="top-dashboard">
             <div class="summary-item">
                 <span class="summary-label">Venda Geral Acumulada</span>
@@ -154,7 +229,6 @@
             <div class="legend-box">
                 <div class="legend-item"><div class="status-circle" style="background: var(--green);"></div> Melhor Performance</div>
                 <div class="legend-item"><div class="status-circle" style="background: var(--red);"></div> Pior Performance</div>
-                <!-- TEXTO DE EXPLICAÇÃO ADICIONADO AQUI -->
                 <div class="legend-desc">A métrica de performance (cores) é definida automaticamente com base no <b>Resultado da Ação</b>.</div>
             </div>
             <div class="ranking-box">
@@ -163,6 +237,16 @@
             </div>
         </div>
 
+        <!-- NOVO PAINEL DE CRESCIMENTO (MÊS ATUAL vs MÊS ANTERIOR) -->
+        <div class="growth-panel" id="growth-panel" style="display: none;">
+            <div class="growth-header-title">
+                <i class="fas fa-chart-line" style="color: var(--blue);"></i> 
+                Evolução Mensal: <span id="growth-months-label" style="color: var(--text-main); font-weight: 800;"></span>
+            </div>
+            <div class="growth-grid" id="growth-grid"></div>
+        </div>
+
+        <!-- GRID DE CARDS MENSAIS -->
         <div class="grid" id="main-grid"></div>
     </div>
 
@@ -170,7 +254,7 @@
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR7cnxA3Ag7GTig-JxsgqHjEQBnginQaA7mgAzXF1TtsPWV3tPEgVJAtIfw36jh6BRP0ZUtQv72SwEi/pub?output=csv';
         
         function parseNum(val) {
-            if (!val) return 0;
+            if (!val && val !== 0) return 0;
             if (typeof val === 'number') return val;
             let clean = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
             return parseFloat(clean) || 0;
@@ -185,6 +269,73 @@
             });
         }
 
+        function renderGrowthPanel(processados) {
+            if (processados.length < 2) return;
+
+            const atual = processados[processados.length - 1];
+            const anterior = processados[processados.length - 2];
+
+            document.getElementById('growth-months-label').innerText = `${atual.mes} sobre ${anterior.mes}`;
+
+            function calc(vAtual, vAnt) {
+                if (vAnt === 0) return { pct: '0.0', isPos: true };
+                const pct = ((vAtual - vAnt) / vAnt) * 100;
+                return {
+                    pct: (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%',
+                    isPos: pct >= 0
+                };
+            }
+
+            const metrics = [
+                {
+                    titulo: 'Venda Geral do Dia',
+                    vAtualStr: atual.vGeral.toLocaleString('pt-br', {style:'currency', currency:'BRL'}),
+                    vAntStr: anterior.vGeral.toLocaleString('pt-br', {style:'currency', currency:'BRL'}),
+                    growth: calc(atual.vGeral, anterior.vGeral),
+                    color: 'var(--blue)'
+                },
+                {
+                    titulo: 'Resultado da Ação',
+                    vAtualStr: atual.resAcao.toLocaleString('pt-br', {style:'currency', currency:'BRL'}),
+                    vAntStr: anterior.resAcao.toLocaleString('pt-br', {style:'currency', currency:'BRL'}),
+                    growth: calc(atual.resAcao, anterior.resAcao),
+                    color: 'var(--green)'
+                },
+                {
+                    titulo: 'Total Compras (Pedidos)',
+                    vAtualStr: atual.qtdCompras.toLocaleString('pt-br') + ' ped.',
+                    vAntStr: anterior.qtdCompras.toLocaleString('pt-br') + ' ped.',
+                    growth: calc(atual.qtdCompras, anterior.qtdCompras),
+                    color: 'var(--text-main)'
+                },
+                {
+                    titulo: 'Qtd Itens Promocionados',
+                    vAtualStr: atual.qtdItens.toLocaleString('pt-br') + ' itens',
+                    vAntStr: anterior.qtdItens.toLocaleString('pt-br') + ' itens',
+                    growth: calc(atual.qtdItens, anterior.qtdItens),
+                    color: 'var(--text-main)'
+                }
+            ];
+
+            const growthGrid = document.getElementById('growth-grid');
+            growthGrid.innerHTML = metrics.map(m => `
+                <div class="growth-card">
+                    <div class="growth-card-header">
+                        <span class="growth-card-label">${m.titulo}</span>
+                        <span class="growth-badge ${m.growth.isPos ? 'pos' : 'neg'}">
+                            <i class="fas fa-arrow-${m.growth.isPos ? 'up' : 'down'}"></i> ${m.growth.pct}
+                        </span>
+                    </div>
+                    <div>
+                        <div class="growth-values" style="color: ${m.color};">${m.vAtualStr}</div>
+                        <div class="growth-compare">Mês anterior: <b>${m.vAntStr}</b></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('growth-panel').style.display = 'block';
+        }
+
         function render(data) {
             const grid = document.getElementById('main-grid');
             grid.innerHTML = '';
@@ -192,14 +343,17 @@
             let somaGeral = 0;
             let somaPromo = 0;
 
-            const processados = data.map(d => ({
+            const processados = data.filter(d => d['MES']).map(d => ({
                 mes: d['MES'],
                 resAcao: parseNum(d['RESULTADO DA AÇÃO']),
                 desconto: parseNum(d['DESCONTO APLICADO']),
-                qtdItens: d['QTD DE ITENS'],
+                qtdItens: parseNum(d['QTD DE ITENS']),
                 vGeral: parseNum(d['VENDA GERAL DO DIA']),
-                qtdCompras: d['QTD DE COMPRAS']
+                qtdCompras: parseNum(d['QTD DE COMPRAS'])
             }));
+
+            // Renderiza o novo painel comparativo mês atual vs anterior
+            renderGrowthPanel(processados);
 
             const valoresPromo = processados.map(p => p.resAcao);
             const maxVal = Math.max(...valoresPromo);
