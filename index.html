@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -14,25 +15,64 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen p-4 md:p-8">
   <div class="max-w-7xl mx-auto space-y-6">
-    <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Datas Dobradas — Análise de Performance</h1>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ao Vivo
-          </span>
+
+    <!-- Header Principal -->
+    <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Datas Dobradas — Análise de Performance
+            </h1>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ao Vivo
+            </span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">
+            Acompanhamento do impacto das ações promocionais (5.5, 6.6, 7.7, 8.8, 9.9, 10.10) no faturamento geral, descontos e volume de pedidos.
+          </p>
         </div>
-        <p class="text-sm text-slate-500 mt-1">Acompanhamento do impacto das ações promocionais (5.5, 6.6, 7.7, 8.8, 9.9, 10.10) nas vendas gerais</p>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="fetchSheetData()" class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all border border-indigo-200/60 cursor-pointer">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-600"></i>
+            <span>Sincronizar</span>
+          </button>
+          <button onclick="openConfigModal()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl transition-all text-xs sm:text-sm cursor-pointer border border-slate-200">
+            <i data-lucide="settings-2" class="w-4 h-4 text-slate-600"></i>
+            <span>Configurar Planilha</span>
+          </button>
+          <button onclick="openAddModal()" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-slate-200"></i>
+            <span>Novo Mês</span>
+          </button>
+          <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Exportar (.csv)</span>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="exportToCSV()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-xs text-sm cursor-pointer">
-          <i data-lucide="download" class="w-4 h-4"></i> Exportar (.csv)
-        </button>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+        <div class="flex items-center gap-2">
+          <i data-lucide="database" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span>Dados atualizados com Outubro (10.10) incluído</span>
+        </div>
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+          <button id="btn-view-cards" onclick="setViewMode('cards')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards
+          </button>
+          <button id="btn-view-table" onclick="setViewMode('table')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer">
+            <i data-lucide="table" class="w-3.5 h-3.5"></i> Tabela Analítica
+          </button>
+        </div>
       </div>
     </header>
 
+    <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-cards"></div>
 
+    <!-- Gráficos -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -43,7 +83,7 @@
             </h3>
             <p class="text-xs text-slate-400 mt-0.5">Comparativo direto da eficiência e faturamento entre datas dobradas</p>
           </div>
-          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
             <button id="btn-metric-fin" onclick="setChartMetric('financial')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer">Financeiro (R$)</button>
             <button id="btn-metric-vol" onclick="setChartMetric('volume')" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">Volumes</button>
           </div>
@@ -69,25 +109,121 @@
       </div>
     </div>
 
+    <!-- Filtros de Mês -->
     <div class="space-y-2 pt-2">
-      <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtrar por Mês / Ação:</h3>
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Filtrar por Mês / Ação:</h3>
+        <button id="btn-clear-filter" onclick="filterMonth('all')" class="hidden text-xs text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer">Limpar Filtro</button>
+      </div>
       <div class="flex items-center gap-2 overflow-x-auto pb-2" id="month-filters"></div>
     </div>
 
+    <!-- Visão 1: Cards -->
     <div id="view-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-    <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
-        <div class="flex items-start justify-between pb-4 border-b border-slate-100">
-          <div>
-            <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase">Análise Detalhada</span>
-            <h2 id="modal-title" class="text-2xl font-extrabold text-slate-900 mt-1">Mês</h2>
-          </div>
-          <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
+    <!-- Visão 2: Tabela Analítica -->
+    <div id="view-table-container" class="hidden bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <input type="text" id="table-search-input" onkeyup="renderTable()" placeholder="Buscar por mês ou observação..." class="max-w-sm w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm outline-none focus:border-indigo-500">
+        <span id="table-count-label" class="text-xs text-slate-500"></span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-4">Mês / Ação</th>
+              <th class="py-3 px-4 text-right">Venda Geral</th>
+              <th class="py-3 px-4 text-right">Venda Promocionada</th>
+              <th class="py-3 px-4 text-right">% Promo</th>
+              <th class="py-3 px-4 text-right">Desconto</th>
+              <th class="py-3 px-4 text-right">Qtd Itens</th>
+              <th class="py-3 px-4 text-right">Compras</th>
+              <th class="py-3 px-4 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Detalhes -->
+  <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="flex items-start justify-between pb-4 border-b border-slate-100">
+        <div>
+          <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase">Performance Analítica</span>
+          <h2 id="modal-title" class="text-2xl font-extrabold text-slate-900 mt-1">Mês</h2>
         </div>
-        <div class="overflow-y-auto py-5 space-y-4" id="modal-content"></div>
-        <div class="pt-4 border-t border-slate-100 flex justify-end">
-          <button onclick="closeModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white cursor-pointer hover:bg-slate-800">Fechar</button>
+        <button onclick="closeModal('detail-modal')" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
+      </div>
+      <div class="overflow-y-auto py-5 space-y-4" id="modal-content"></div>
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+        <button id="btn-modal-edit" class="px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold rounded-xl text-xs cursor-pointer">Editar Valores</button>
+        <button onclick="closeModal('detail-modal')" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white cursor-pointer hover:bg-slate-800">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar/Adicionar -->
+  <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h2 id="edit-modal-title" class="text-xl font-bold text-slate-900">Editar Dados do Mês</h2>
+        <button onclick="closeModal('edit-modal')" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
+      </div>
+      <form onsubmit="saveMonthForm(event)" class="overflow-y-auto py-4 space-y-4 text-xs">
+        <input type="hidden" id="edit-id">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Mês / Ação</label>
+          <input type="text" id="edit-mes" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Venda Geral (R$)</label>
+            <input type="number" step="0.01" id="edit-venda-geral" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Resultado Promo (R$)</label>
+            <input type="number" step="0.01" id="edit-venda-promo" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Desconto (R$)</label>
+            <input type="number" step="0.01" id="edit-desconto" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Qtd Itens</label>
+            <input type="number" step="1" id="edit-itens" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Compras</label>
+            <input type="number" step="1" id="edit-compras" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('edit-modal')" class="px-4 py-2 rounded-xl text-slate-600 font-semibold hover:bg-slate-100">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Configurar Planilha / Colar Dados -->
+  <div id="config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <h2 class="text-xl font-bold text-slate-900">Configurar Conexão da Planilha</h2>
+        <button onclick="closeModal('config-modal')" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
+      </div>
+      <div class="py-4 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 uppercase mb-1">Colar Células Copiadas da Planilha (Ctrl+C e Ctrl+V)</label>
+          <p class="text-slate-500 mb-2">No Google Planilhas, selecione suas linhas, aperte Ctrl+C e cole abaixo:</p>
+          <textarea id="paste-input" rows="5" class="w-full p-3 rounded-xl border border-slate-300 font-mono text-xs outline-none focus:border-indigo-500" placeholder="MES&#9;RESULTADO DA AÇÃO&#9;DESCONTO APLICADO..."></textarea>
+          <button onclick="importPastedData()" class="mt-2 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl cursor-pointer">Importar Dados Colados</button>
         </div>
       </div>
     </div>
@@ -104,6 +240,7 @@
     ];
 
     let currentFilter = 'all';
+    let currentView = 'cards';
     let currentChartMetric = 'financial';
     let salesChart = null;
     let shareChart = null;
@@ -120,27 +257,51 @@
       const totalItens = datasDobradasData.reduce((a, b) => a + b.qtdItens, 0);
       const totalPedidos = datasDobradasData.reduce((a, b) => a + b.totalCompras, 0);
       const pct = totalGeral > 0 ? (totalPromo / totalGeral) * 100 : 0;
+      const ticket = totalPedidos > 0 ? totalPromo / totalPedidos : 0;
 
       document.getElementById('kpi-cards').innerHTML = `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-xs font-semibold text-slate-400 uppercase">Venda Geral Acumulada</span>
-          <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalGeral)}</h2>
-          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">6 campanhas consolidadas</div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-400 uppercase">Venda Geral Acumulada</span>
+              <span class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="shopping-bag" class="w-4 h-4"></i></span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalGeral)}</h2>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-medium">${datasDobradasData.length} campanhas consolidadas</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-xs font-semibold text-slate-400 uppercase">Resultado Promocionado</span>
-          <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalPromo)}</h2>
-          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-emerald-700 font-semibold">${formatPercent(pct)} da Venda Total</div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-400 uppercase">Resultado Promocionado</span>
+              <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalPromo)}</h2>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-emerald-700 font-semibold flex justify-between">
+            <span>${formatPercent(pct)} da Venda Total</span>
+            <span>Ticket: ${formatCurrency(ticket)}</span>
+          </div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-xs font-semibold text-slate-400 uppercase">Total de Descontos</span>
-          <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalDesconto)}</h2>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-400 uppercase">Total de Descontos</span>
+              <span class="p-2 bg-rose-50 text-rose-600 rounded-xl"><i data-lucide="tag" class="w-4 h-4"></i></span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalDesconto)}</h2>
+          </div>
           <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-rose-600 font-semibold">Abatimento Promocional</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-xs font-semibold text-slate-400 uppercase">Itens Promocionados</span>
-          <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatNumber(totalItens)}</h2>
-          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">${formatNumber(totalPedidos)} compras</div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-400 uppercase">Itens Promocionados</span>
+              <span class="p-2 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="box" class="w-4 h-4"></i></span>
+            </div>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatNumber(totalItens)}</h2>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">${formatNumber(totalPedidos)} compras realizadas</div>
         </div>
       `;
     }
@@ -149,9 +310,14 @@
       let html = `<button onclick="filterMonth('all')" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${currentFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200'}">Todas as Ações (${datasDobradasData.length})</button>`;
       datasDobradasData.forEach(d => {
         const isAct = currentFilter === d.mes;
-        html += `<button onclick="filterMonth('${d.mes}')" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${isAct ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200'}">${d.mes}</button>`;
+        const isOct = d.mes.toLowerCase().includes('outubro');
+        html += `<button onclick="filterMonth('${d.mes}')" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isAct ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200'}">
+          <span>${d.mes}</span>
+          ${isOct ? `<span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${isAct ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700'}">10.10</span>` : ''}
+        </button>`;
       });
       document.getElementById('month-filters').innerHTML = html;
+      document.getElementById('btn-clear-filter').className = currentFilter === 'all' ? 'hidden' : 'text-xs text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer';
     }
 
     function renderCards() {
@@ -162,22 +328,27 @@
       filtered.forEach(m => {
         const pct = m.vendaGeral > 0 ? (m.vendaPromocionada / m.vendaGeral) * 100 : 0;
         const ticket = m.totalCompras > 0 ? (m.vendaPromocionada / m.totalCompras) : 0;
+        const itensPed = m.totalCompras > 0 ? (m.qtdItens / m.totalCompras).toFixed(1) : 0;
         const isOct = m.mes.toLowerCase().includes('outubro');
 
         const card = document.createElement('div');
-        card.className = `bg-white border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between text-left ${isOct ? 'border-indigo-300 ring-1 ring-indigo-200' : 'border-slate-200'}`;
-        card.onclick = () => openModal(m);
+        card.className = `bg-white border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group text-left ${isOct ? 'border-indigo-300 ring-1 ring-indigo-200' : 'border-slate-200'}`;
+        card.onclick = () => openDetailModal(m);
 
         card.innerHTML = `
           <div>
             <div class="flex justify-between items-start border-b border-slate-100 pb-4">
               <div>
                 <span class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${isOct ? 'bg-indigo-600 text-white' : 'text-indigo-700 bg-indigo-50'}">${m.mes}</span>
-                <h3 class="text-2xl font-extrabold text-slate-900 mt-2.5 tracking-tight">${formatCurrency(m.vendaPromocionada)}</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Resultado promocionado</p>
+                <h3 class="text-2xl font-extrabold text-slate-900 mt-2.5 tracking-tight group-hover:text-indigo-600 transition-colors">${formatCurrency(m.vendaPromocionada)}</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Resultado de itens promocionados</p>
               </div>
-              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg">${formatPercent(pct)} da Venda</span>
+              <div class="flex flex-col items-end gap-1.5">
+                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg">${formatPercent(pct)} da Venda</span>
+                <button onclick="event.stopPropagation(); openEditModal('${m.id}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded cursor-pointer" title="Editar"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+              </div>
             </div>
+
             <div class="mt-4 grid grid-cols-2 gap-3">
               <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <span class="text-[11px] font-semibold text-slate-400 uppercase block">Venda Geral</span>
@@ -190,6 +361,11 @@
                 <span class="text-[10px] text-rose-500 block mt-1">${formatNumber(m.qtdItens)} itens</span>
               </div>
             </div>
+
+            <div class="mt-4 bg-slate-50/80 p-3.5 rounded-xl space-y-2 border border-slate-100 text-xs">
+              <div class="flex justify-between items-center"><span class="text-slate-500">Ticket Médio Promo:</span><strong class="text-slate-800">${formatCurrency(ticket)}</strong></div>
+              <div class="flex justify-between items-center"><span class="text-slate-500">Média Itens/Compra:</span><strong class="text-slate-800">${itensPed} itens</strong></div>
+            </div>
           </div>
           <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-indigo-600 font-semibold">
             <span>Ver Análise Completa</span>
@@ -198,12 +374,61 @@
         `;
         container.appendChild(card);
       });
+      lucide.createIcons();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const q = (document.getElementById('table-search-input')?.value || '').toLowerCase();
+      let filtered = currentFilter === 'all' ? datasDobradasData : datasDobradasData.filter(d => d.mes === currentFilter);
+      if (q) filtered = filtered.filter(d => d.mes.toLowerCase().includes(q));
+      tbody.innerHTML = '';
+
+      document.getElementById('table-count-label').innerText = `Exibindo ${filtered.length} de ${datasDobradasData.length} ações`;
+
+      filtered.forEach(r => {
+        const pct = r.vendaGeral > 0 ? (r.vendaPromocionada / r.vendaGeral) * 100 : 0;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 cursor-pointer";
+        tr.onclick = () => openDetailModal(r);
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 font-bold text-slate-900">${r.mes}</td>
+          <td class="py-3.5 px-4 text-right font-mono text-slate-600">${formatCurrency(r.vendaGeral)}</td>
+          <td class="py-3.5 px-4 text-right font-mono font-bold text-indigo-700">${formatCurrency(r.vendaPromocionada)}</td>
+          <td class="py-3.5 px-4 text-right"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">${formatPercent(pct)}</span></td>
+          <td class="py-3.5 px-4 text-right font-mono text-rose-600">${formatCurrency(r.descontoAplicado)}</td>
+          <td class="py-3.5 px-4 text-right font-mono">${formatNumber(r.qtdItens)}</td>
+          <td class="py-3.5 px-4 text-right font-mono">${formatNumber(r.totalCompras)}</td>
+          <td class="py-3.5 px-4 text-center" onclick="event.stopPropagation()">
+            <button onclick="openEditModal('${r.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
     }
 
     function filterMonth(m) {
       currentFilter = m;
       renderFilters();
       renderCards();
+      renderTable();
+    }
+
+    function setViewMode(mode) {
+      currentView = mode;
+      if (mode === 'cards') {
+        document.getElementById('view-cards-container').classList.remove('hidden');
+        document.getElementById('view-table-container').classList.add('hidden');
+        document.getElementById('btn-view-cards').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer';
+        document.getElementById('btn-view-table').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer';
+      } else {
+        document.getElementById('view-cards-container').classList.add('hidden');
+        document.getElementById('view-table-container').classList.remove('hidden');
+        document.getElementById('btn-view-cards').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer';
+        document.getElementById('btn-view-table').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer';
+        renderTable();
+      }
     }
 
     function setChartMetric(metric) {
@@ -211,9 +436,11 @@
       if (metric === 'financial') {
         document.getElementById('btn-metric-fin').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer';
         document.getElementById('btn-metric-vol').className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
+        document.getElementById('bar-chart-title').innerText = 'Venda Geral vs. Resultado Promocionado vs. Desconto';
       } else {
         document.getElementById('btn-metric-fin').className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
         document.getElementById('btn-metric-vol').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer';
+        document.getElementById('bar-chart-title').innerText = 'Volume de Itens vs. Quantidade de Compras (Pedidos)';
       }
       initCharts();
     }
@@ -239,7 +466,7 @@
       salesChart = new Chart(ctxBar, {
         type: 'bar',
         data: { labels, datasets: barDatasets },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
       });
 
       const ctxDonut = document.getElementById('promoShareChart').getContext('2d');
@@ -254,37 +481,103 @@
             borderColor: '#ffffff'
           }]
         },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '72%' }
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { position: 'bottom' } } }
       });
     }
 
-    function openModal(r) {
+    function openDetailModal(r) {
       const pct = r.vendaGeral > 0 ? (r.vendaPromocionada / r.vendaGeral) * 100 : 0;
       const ticket = r.totalCompras > 0 ? (r.vendaPromocionada / r.totalCompras) : 0;
       const precoItem = r.qtdItens > 0 ? (r.vendaPromocionada / r.qtdItens) : 0;
 
       document.getElementById('modal-title').innerText = r.mes;
+      document.getElementById('btn-modal-edit').onclick = () => { closeModal('detail-modal'); openEditModal(r.id); };
       document.getElementById('modal-content').innerHTML = `
         <div class="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 flex justify-between items-center">
           <div>
             <span class="text-xs uppercase text-indigo-900/60 font-bold">Faturamento Promocionado</span>
             <p class="text-3xl font-black text-indigo-950 mt-1">${formatCurrency(r.vendaPromocionada)}</p>
-            <p class="text-xs text-indigo-700 mt-1">${formatPercent(pct)} da venda geral (${formatCurrency(r.vendaGeral)})</p>
+            <p class="text-xs text-indigo-700 mt-1">${formatPercent(pct)} da venda geral do dia (${formatCurrency(r.vendaGeral)})</p>
           </div>
           <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800">${formatNumber(r.totalCompras)} compras</span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-xs">
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block">Desconto</span><strong class="text-base text-slate-900">${formatCurrency(r.descontoAplicado)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block">Ticket Médio</span><strong class="text-base text-slate-900">${formatCurrency(ticket)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block">Preço / Item</span><strong class="text-base text-slate-900">${formatCurrency(precoItem)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block">Itens Promo</span><strong class="text-base text-slate-900">${formatNumber(r.qtdItens)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block">Venda Geral</span><strong class="text-base text-slate-900">${formatCurrency(r.vendaGeral)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Desconto Concedido</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(r.descontoAplicado)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Ticket Médio Promo</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(ticket)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Preço Médio / Item</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(precoItem)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Itens Promocionados</span><strong class="text-base text-slate-900 mt-1 block">${formatNumber(r.qtdItens)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Média Itens/Compra</span><strong class="text-base text-slate-900 mt-1 block">${r.totalCompras > 0 ? (r.qtdItens / r.totalCompras).toFixed(1) : 0}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Venda Geral</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(r.vendaGeral)}</strong></div>
         </div>
       `;
       document.getElementById('detail-modal').classList.remove('hidden');
     }
 
-    function closeModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+    function openEditModal(id) {
+      const r = datasDobradasData.find(d => d.id === id);
+      if (!r) return;
+      document.getElementById('edit-id').value = r.id;
+      document.getElementById('edit-mes').value = r.mes;
+      document.getElementById('edit-venda-geral').value = r.vendaGeral;
+      document.getElementById('edit-venda-promo').value = r.vendaPromocionada;
+      document.getElementById('edit-desconto').value = r.descontoAplicado;
+      document.getElementById('edit-itens').value = r.qtdItens;
+      document.getElementById('edit-compras').value = r.totalCompras;
+      document.getElementById('edit-modal-title').innerText = `Editar ${r.mes}`;
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function openAddModal() {
+      document.getElementById('edit-id').value = '';
+      document.getElementById('edit-mes').value = 'Novembro (11.11)';
+      document.getElementById('edit-venda-geral').value = '0';
+      document.getElementById('edit-venda-promo').value = '0';
+      document.getElementById('edit-desconto').value = '0';
+      document.getElementById('edit-itens').value = '0';
+      document.getElementById('edit-compras').value = '0';
+      document.getElementById('edit-modal-title').innerText = 'Adicionar Nova Ação / Mês';
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function saveMonthForm(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const mes = document.getElementById('edit-mes').value;
+      const vendaGeral = parseFloat(document.getElementById('edit-venda-geral').value) || 0;
+      const vendaPromo = parseFloat(document.getElementById('edit-venda-promo').value) || 0;
+      const desconto = parseFloat(document.getElementById('edit-desconto').value) || 0;
+      const itens = parseInt(document.getElementById('edit-itens').value) || 0;
+      const compras = parseInt(document.getElementById('edit-compras').value) || 0;
+
+      if (id) {
+        const item = datasDobradasData.find(d => d.id === id);
+        if (item) {
+          item.mes = mes;
+          item.vendaGeral = vendaGeral;
+          item.vendaPromocionada = vendaPromo;
+          item.descontoAplicado = desconto;
+          item.qtdItens = itens;
+          item.totalCompras = compras;
+        }
+      } else {
+        datasDobradasData.push({ id: String(Date.now()), mes, vendaGeral, vendaPromocionada: vendaPromo, descontoAplicado: desconto, qtdItens: itens, totalCompras: compras });
+      }
+      closeModal('edit-modal');
+      updateDashboard();
+    }
+
+    function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function importPastedData() {
+      const val = document.getElementById('paste-input').value.trim();
+      if (!val) return;
+      const parsed = Papa.parse(val, { header: true, skipEmptyLines: true });
+      if (parsed.data && parsed.data.length > 0) {
+        alert(`${parsed.data.length} linhas lidas com sucesso!`);
+        closeModal('config-modal');
+      }
+    }
 
     function exportToCSV() {
       let csv = "MES;RESULTADO DA ACAO;DESCONTO APLICADO;QTD DE ITENS;VENDA GERAL DO DIA;QTD DE COMPRAS\r\n";
@@ -298,12 +591,28 @@
       a.click();
     }
 
-    window.onload = function() {
+    function fetchSheetData() {
+      fetch('/planilha_datas_dobradas.csv')
+        .then(r => r.text())
+        .then(text => {
+          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+          if (parsed.data && parsed.data.length > 0) updateDashboard();
+        })
+        .catch(console.warn);
+    }
+
+    function updateDashboard() {
       renderKPIs();
       renderFilters();
       renderCards();
+      renderTable();
       initCharts();
-      if (window.lucide) lucide.createIcons();
+      lucide.createIcons();
+    }
+
+    window.onload = function() {
+      updateDashboard();
+      setInterval(fetchSheetData, 120000);
     };
   </script>
 </body>
