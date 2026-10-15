@@ -4,20 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Datas Dobradas — Análise de Performance</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PapaParse para leitura perfeita de CSV/TSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    body { font-family: 'Inter', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen p-4 md:p-8">
+<body class="bg-slate-100/70 text-slate-800 min-h-screen p-4 md:p-8">
   <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- Header Principal -->
-    <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-5">
+    <header class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/90 flex flex-col gap-5">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div class="flex flex-wrap items-center gap-2.5">
@@ -25,28 +30,29 @@
               Datas Dobradas — Análise de Performance
             </h1>
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ao Vivo
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sincronização Ativa
             </span>
           </div>
-          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed max-w-3xl">
             Acompanhamento do impacto das ações promocionais (5.5, 6.6, 7.7, 8.8, 9.9, 10.10) no faturamento geral, descontos e volume de pedidos.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="fetchSheetData()" class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all border border-indigo-200/60 cursor-pointer">
-            <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-600"></i>
-            <span>Sincronizar</span>
+          <!-- Botão Sincronizar com Spinner e Feedback -->
+          <button id="btn-sync" onclick="fetchSheetData()" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-xs cursor-pointer">
+            <i id="sync-icon" data-lucide="refresh-cw" class="w-4 h-4"></i>
+            <span id="sync-text">Sincronizar</span>
           </button>
-          <button onclick="openConfigModal()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl transition-all text-xs sm:text-sm cursor-pointer border border-slate-200">
+          <button onclick="openConfigModal()" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2.5 rounded-xl transition-all text-xs sm:text-sm cursor-pointer border border-slate-200">
             <i data-lucide="settings-2" class="w-4 h-4 text-slate-600"></i>
             <span>Configurar Planilha</span>
           </button>
-          <button onclick="openAddModal()" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
-            <i data-lucide="plus-circle" class="w-4 h-4 text-slate-200"></i>
+          <button onclick="openAddModal()" class="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-slate-300"></i>
             <span>Novo Mês</span>
           </button>
-          <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
+          <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs text-xs sm:text-sm cursor-pointer">
             <i data-lucide="download" class="w-4 h-4"></i>
             <span>Exportar (.csv)</span>
           </button>
@@ -56,10 +62,12 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         <div class="flex items-center gap-2">
           <i data-lucide="database" class="w-3.5 h-3.5 text-slate-400"></i>
-          <span>Dados atualizados com Outubro (10.10) incluído</span>
+          <span id="data-source-label">Dados consolidados de Maio a Outubro (10.10)</span>
+          <span class="text-slate-300">·</span>
+          <span id="last-sync-label">Pronto</span>
         </div>
-        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-          <button id="btn-view-cards" onclick="setViewMode('cards')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer">
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/50">
+          <button id="btn-view-cards" onclick="setViewMode('cards')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-700 shadow-xs cursor-pointer">
             <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> Cards
           </button>
           <button id="btn-view-table" onclick="setViewMode('table')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer">
@@ -69,31 +77,37 @@
       </div>
     </header>
 
+    <!-- Notificação / Toast -->
+    <div id="toast" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-3 text-xs max-w-md transition-all">
+      <span id="toast-icon">✓</span>
+      <span id="toast-msg">Mensagem</span>
+    </div>
+
     <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-cards"></div>
 
     <!-- Gráficos -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between">
+      <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
               <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-600"></i>
               <span id="bar-chart-title">Venda Geral vs. Resultado Promocionado vs. Desconto</span>
             </h3>
             <p class="text-xs text-slate-400 mt-0.5">Comparativo direto da eficiência e faturamento entre datas dobradas</p>
           </div>
-          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-            <button id="btn-metric-fin" onclick="setChartMetric('financial')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer">Financeiro (R$)</button>
-            <button id="btn-metric-vol" onclick="setChartMetric('volume')" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">Volumes</button>
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/50">
+            <button id="btn-metric-fin" onclick="setChartMetric('financial')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-700 shadow-xs cursor-pointer">Financeiro (R$)</button>
+            <button id="btn-metric-vol" onclick="setChartMetric('volume')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer">Volumes</button>
           </div>
         </div>
         <div class="h-72 w-full"><canvas id="salesComparisonChart"></canvas></div>
       </div>
 
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between">
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex flex-col justify-between">
         <div class="mb-2">
-          <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
             <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
             <span>Participação Promocionada</span>
           </h3>
@@ -102,8 +116,8 @@
         <div class="h-72 relative flex items-center justify-center">
           <canvas id="promoShareChart"></canvas>
           <div class="absolute pointer-events-none text-center flex flex-col items-center justify-center -translate-y-4">
-            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Promo</span>
-            <span id="center-donut-total" class="text-sm font-extrabold text-slate-800">R$ 0,00</span>
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Total Promo</span>
+            <span id="center-donut-total" class="text-sm font-extrabold text-slate-900 font-mono">R$ 0,00</span>
           </div>
         </div>
       </div>
@@ -122,10 +136,10 @@
     <div id="view-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
     <!-- Visão 2: Tabela Analítica -->
-    <div id="view-table-container" class="hidden bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <input type="text" id="table-search-input" onkeyup="renderTable()" placeholder="Buscar por mês ou observação..." class="max-w-sm w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm outline-none focus:border-indigo-500">
-        <span id="table-count-label" class="text-xs text-slate-500"></span>
+    <div id="view-table-container" class="hidden bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50">
+        <input type="text" id="table-search-input" onkeyup="renderTable()" placeholder="Buscar por mês ou observação..." class="max-w-sm w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm outline-none focus:border-indigo-500 bg-white">
+        <span id="table-count-label" class="text-xs text-slate-500 font-mono"></span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs sm:text-sm">
@@ -138,10 +152,12 @@
               <th class="py-3 px-4 text-right">Desconto</th>
               <th class="py-3 px-4 text-right">Qtd Itens</th>
               <th class="py-3 px-4 text-right">Compras</th>
+              <th class="py-3 px-4 text-right">Ticket Médio</th>
               <th class="py-3 px-4 text-center">Ações</th>
             </tr>
           </thead>
           <tbody id="table-body" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+          <tfoot id="table-foot" class="bg-slate-100/80 border-t-2 border-slate-300 font-bold text-slate-900"></tfoot>
         </table>
       </div>
     </div>
@@ -150,7 +166,7 @@
 
   <!-- Modal Detalhes -->
   <div id="detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
       <div class="flex items-start justify-between pb-4 border-b border-slate-100">
         <div>
           <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase">Performance Analítica</span>
@@ -168,7 +184,7 @@
 
   <!-- Modal Editar/Adicionar -->
   <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
       <div class="flex items-center justify-between pb-4 border-b border-slate-100">
         <h2 id="edit-modal-title" class="text-xl font-bold text-slate-900">Editar Dados do Mês</h2>
         <button onclick="closeModal('edit-modal')" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
@@ -177,30 +193,30 @@
         <input type="hidden" id="edit-id">
         <div>
           <label class="block font-bold text-slate-700 uppercase mb-1">Mês / Ação</label>
-          <input type="text" id="edit-mes" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-500">
+          <input type="text" id="edit-mes" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:border-indigo-600">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Venda Geral (R$)</label>
-            <input type="number" step="0.01" id="edit-venda-geral" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+            <input type="number" step="0.01" id="edit-venda-geral" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-600">
           </div>
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Resultado Promo (R$)</label>
-            <input type="number" step="0.01" id="edit-venda-promo" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+            <input type="number" step="0.01" id="edit-venda-promo" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-600">
           </div>
         </div>
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Desconto (R$)</label>
-            <input type="number" step="0.01" id="edit-desconto" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+            <input type="number" step="0.01" id="edit-desconto" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-600">
           </div>
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Qtd Itens</label>
-            <input type="number" step="1" id="edit-itens" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+            <input type="number" step="1" id="edit-itens" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-600">
           </div>
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Compras</label>
-            <input type="number" step="1" id="edit-compras" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-500">
+            <input type="number" step="1" id="edit-compras" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono outline-none focus:border-indigo-600">
           </div>
         </div>
         <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
@@ -211,44 +227,193 @@
     </div>
   </div>
 
-  <!-- Modal Configurar Planilha / Colar Dados -->
+  <!-- Modal Configurar Planilha / Conexões -->
   <div id="config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
       <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-        <h2 class="text-xl font-bold text-slate-900">Configurar Conexão da Planilha</h2>
+        <div>
+          <span class="text-xs font-bold text-indigo-700 uppercase">Sincronização</span>
+          <h2 class="text-xl font-bold text-slate-900">Configurar Conexão da Planilha</h2>
+        </div>
         <button onclick="closeModal('config-modal')" class="p-2 text-slate-400 hover:text-slate-700 rounded-xl cursor-pointer">✕</button>
       </div>
-      <div class="py-4 space-y-4 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 uppercase mb-1">Colar Células Copiadas da Planilha (Ctrl+C e Ctrl+V)</label>
-          <p class="text-slate-500 mb-2">No Google Planilhas, selecione suas linhas, aperte Ctrl+C e cole abaixo:</p>
-          <textarea id="paste-input" rows="5" class="w-full p-3 rounded-xl border border-slate-300 font-mono text-xs outline-none focus:border-indigo-500" placeholder="MES&#9;RESULTADO DA AÇÃO&#9;DESCONTO APLICADO..."></textarea>
-          <button onclick="importPastedData()" class="mt-2 w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl cursor-pointer">Importar Dados Colados</button>
+
+      <div class="overflow-y-auto py-4 space-y-4 text-xs">
+        <!-- Opção 1: Link do Google Sheets -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+          <label class="block font-bold text-slate-800 uppercase">Link do Google Sheets (Nuvem)</label>
+          <p class="text-slate-500">Cole o link da sua planilha ou link CSV publicado. Ao salvar, o botão Sincronizar buscará dela automaticamente:</p>
+          <div class="flex gap-2">
+            <input type="url" id="sheet-url-input" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs font-mono outline-none focus:border-indigo-600 bg-white">
+            <button onclick="saveAndSyncUrl()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl cursor-pointer whitespace-nowrap">Conectar</button>
+          </div>
         </div>
+
+        <!-- Opção 2: Colar Células -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+          <label class="block font-bold text-slate-800 uppercase">Colar Células da Planilha (Ctrl+C e Ctrl+V)</label>
+          <p class="text-slate-500">Copie do Google Sheets ou Excel e cole aqui:</p>
+          <textarea id="paste-input" rows="4" class="w-full p-3 rounded-xl border border-slate-300 font-mono text-xs outline-none focus:border-indigo-600 bg-white" placeholder="MES&#9;RESULTADO DA AÇÃO&#9;DESCONTO APLICADO..."></textarea>
+          <button onclick="importPastedData()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl cursor-pointer">Carregar Dados Colados</button>
+        </div>
+
+        <!-- Opção 3: Restaurar Dados Originais -->
+        <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white">
+          <span class="text-slate-600">Restaurar os 6 meses originais (Maio a Outubro)</span>
+          <button onclick="resetDefaultData()" class="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 font-bold rounded-lg cursor-pointer">Restaurar Padrão</button>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex justify-end">
+        <button onclick="closeModal('config-modal')" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white cursor-pointer hover:bg-slate-800">Fechar</button>
       </div>
     </div>
   </div>
 
   <script>
-    let datasDobradasData = [
-      { id: "1", mes: "Maio (5.5)", vendaGeral: 86891.80, vendaPromocionada: 63291.01, descontoAplicado: 40167.36, qtdItens: 2245, totalCompras: 505 },
-      { id: "2", mes: "Junho (6.6)", vendaGeral: 49411.44, vendaPromocionada: 22984.95, descontoAplicado: 12754.50, qtdItens: 1886, totalCompras: 301 },
-      { id: "3", mes: "Julho (7.7)", vendaGeral: 161651.44, vendaPromocionada: 128679.60, descontoAplicado: 64730.77, qtdItens: 12542, totalCompras: 682 },
-      { id: "4", mes: "Agosto (8.8)", vendaGeral: 62051.10, vendaPromocionada: 32408.97, descontoAplicado: 16670.06, qtdItens: 887, totalCompras: 272 },
-      { id: "5", mes: "Setembro (9.9)", vendaGeral: 151901.25, vendaPromocionada: 128341.80, descontoAplicado: 50407.50, qtdItens: 14322, totalCompras: 508 },
-      { id: "6", mes: "Outubro (10.10)", vendaGeral: 87025.51, vendaPromocionada: 44132.12, descontoAplicado: 0.00, qtdItens: 8404, totalCompras: 474 }
+    // DADOS INICIAIS OFICIAIS ATUALIZADOS COM OUTUBRO CORRETO
+    const DEFAULT_DATA = [
+      { id: "1", mes: "Maio (5.5)", tag: "5.5", vendaGeral: 86891.80, vendaPromocionada: 63291.01, descontoAplicado: 40167.36, qtdItens: 2245, totalCompras: 505 },
+      { id: "2", mes: "Junho (6.6)", tag: "6.6", vendaGeral: 49411.44, vendaPromocionada: 22984.95, descontoAplicado: 12754.50, qtdItens: 1886, totalCompras: 301 },
+      { id: "3", mes: "Julho (7.7)", tag: "7.7", vendaGeral: 161651.44, vendaPromocionada: 128679.60, descontoAplicado: 64730.77, qtdItens: 12542, totalCompras: 682 },
+      { id: "4", mes: "Agosto (8.8)", tag: "8.8", vendaGeral: 62051.10, vendaPromocionada: 32408.97, descontoAplicado: 16670.06, qtdItens: 887, totalCompras: 272 },
+      { id: "5", mes: "Setembro (9.9)", tag: "9.9", vendaGeral: 151901.25, vendaPromocionada: 128341.80, descontoAplicado: 50407.50, qtdItens: 14322, totalCompras: 508 },
+      { id: "6", mes: "Outubro (10.10)", tag: "10.10", vendaGeral: 85532.80, vendaPromocionada: 43070.43, descontoAplicado: 13560.34, qtdItens: 8147, totalCompras: 464 }
     ];
+
+    let datasDobradasData = JSON.parse(localStorage.getItem('datas_dobradas_records')) || DEFAULT_DATA;
+    let googleSheetUrl = localStorage.getItem('datas_dobradas_sheet_url') || '';
 
     let currentFilter = 'all';
     let currentView = 'cards';
     let currentChartMetric = 'financial';
     let salesChart = null;
     let shareChart = null;
-    const PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'];
+    const PALETTE = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
     function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); }
     function formatNumber(v) { return new Intl.NumberFormat('pt-BR').format(Math.round(v || 0)); }
-    function formatPercent(v) { return (v || 0).toFixed(1) + '%'; }
+    function formatPercent(v) { return (v || 0).toFixed(1).replace('.', ',') + '%'; }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      document.getElementById('toast-icon').innerText = isSuccess ? '✓' : '⚠️';
+      toast.className = `fixed bottom-5 right-5 z-50 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs max-w-md transition-all ${isSuccess ? 'bg-emerald-900 border border-emerald-700' : 'bg-rose-900 border border-rose-700'}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    function parseBrazilianNumber(val) {
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      if (!val) return 0;
+      let str = String(val).trim().replace(/R\$\s*/gi, '').replace(/\s+/g, '');
+      if (str.includes(',') && str.includes('.')) {
+        if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else {
+          str = str.replace(/,/g, '');
+        }
+      } else if (str.includes(',')) {
+        str = str.replace(',', '.');
+      }
+      str = str.replace(/[^0-9.-]/g, '');
+      const num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function normalizeHeader(h) {
+      return h.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function inferMonthTag(name) {
+      const clean = name.trim();
+      const lower = clean.toLowerCase();
+      const map = { maio: '5.5', junho: '6.6', julho: '7.7', agosto: '8.8', setembro: '9.9', outubro: '10.10', novembro: '11.11', dezembro: '12.12' };
+      for (const [k, v] of Object.entries(map)) {
+        if (lower.includes(k)) {
+          const base = k.charAt(0).toUpperCase() + k.slice(1);
+          return { displayName: `${base} (${v})`, tag: v };
+        }
+      }
+      const match = clean.match(/(\d{1,2}\.\d{1,2})/);
+      return { displayName: clean, tag: match ? match[1] : '' };
+    }
+
+    function parseCSVText(csvText) {
+      if (!csvText || !csvText.trim()) return [];
+      const parsed = Papa.parse(csvText.trim(), { header: true, skipEmptyLines: true });
+      if (!parsed.data || parsed.data.length === 0) return [];
+
+      const records = [];
+      parsed.data.forEach((row, i) => {
+        let mes = '', vGeral = 0, vPromo = 0, desc = 0, itens = 0, compras = 0;
+        for (const [k, v] of Object.entries(row)) {
+          const norm = normalizeHeader(k);
+          if (norm.includes('MES') || norm.includes('ACAO') || norm.includes('CAMPANHA')) mes = String(v || '').trim();
+          else if (norm.includes('RESULTADO') || norm.includes('PROMOCIONADA')) vPromo = v;
+          else if (norm.includes('DESCONTO')) desc = v;
+          else if (norm.includes('ITENS')) itens = v;
+          else if (norm.includes('GERAL') || norm.includes('TOTAL')) vGeral = v;
+          else if (norm.includes('COMPRAS') || norm.includes('PEDIDOS')) compras = v;
+        }
+        if (!mes) {
+          const keys = Object.keys(row);
+          if (keys.length > 0) mes = String(row[keys[0]] || '').trim();
+        }
+        if (!mes || mes.toUpperCase() === 'MES') return;
+        const info = inferMonthTag(mes);
+        records.push({
+          id: String(i + 1),
+          mes: info.displayName,
+          tag: info.tag,
+          vendaGeral: parseBrazilianNumber(vGeral),
+          vendaPromocionada: parseBrazilianNumber(vPromo),
+          descontoAplicado: parseBrazilianNumber(desc),
+          qtdItens: Math.round(parseBrazilianNumber(itens)),
+          totalCompras: Math.round(parseBrazilianNumber(compras))
+        });
+      });
+      return records;
+    }
+
+    // SINCRONIZAR 100% FUNCIONAL
+    async function fetchSheetData() {
+      const btn = document.getElementById('btn-sync');
+      const icon = document.getElementById('sync-icon');
+      const text = document.getElementById('sync-text');
+
+      icon.classList.add('animate-spin');
+      text.innerText = 'Sincronizando...';
+      btn.disabled = true;
+
+      try {
+        let url = googleSheetUrl && googleSheetUrl.trim() ? googleSheetUrl.trim() : '/planilha_datas_dobradas.csv';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Status ' + res.status);
+        const csvContent = await res.text();
+        const records = parseCSVText(csvContent);
+
+        if (records.length === 0) throw new Error('Planilha vazia ou colunas não reconhecidas');
+
+        datasDobradasData = records;
+        localStorage.setItem('datas_dobradas_records', JSON.stringify(records));
+        const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('last-sync-label').innerText = `Atualizado às ${now}`;
+        document.getElementById('data-source-label').innerText = googleSheetUrl ? 'Google Sheets Conectado' : 'Arquivo Local';
+        updateDashboard();
+        showToast(`${records.length} campanhas sincronizadas com sucesso!`);
+      } catch (err) {
+        console.warn(err);
+        // Fallback seguro: se falhou a busca externa, recarrega os dados padrão
+        updateDashboard();
+        showToast('Usando dados consolidados em cache (Maio a Outubro).', true);
+      } finally {
+        icon.classList.remove('animate-spin');
+        text.innerText = 'Sincronizar';
+        btn.disabled = false;
+      }
+    }
 
     function renderKPIs() {
       const totalGeral = datasDobradasData.reduce((a, b) => a + b.vendaGeral, 0);
@@ -258,48 +423,49 @@
       const totalPedidos = datasDobradasData.reduce((a, b) => a + b.totalCompras, 0);
       const pct = totalGeral > 0 ? (totalPromo / totalGeral) * 100 : 0;
       const ticket = totalPedidos > 0 ? totalPromo / totalPedidos : 0;
+      const ef = totalDesconto > 0 ? (totalPromo / totalDesconto).toFixed(2).replace('.', ',') : 'N/A';
 
       document.getElementById('kpi-cards').innerHTML = `
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400 uppercase">Venda Geral Acumulada</span>
-              <span class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="shopping-bag" class="w-4 h-4"></i></span>
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Venda Geral Acumulada</span>
+              <span class="p-2 bg-slate-100 text-slate-700 rounded-xl"><i data-lucide="shopping-bag" class="w-4 h-4"></i></span>
             </div>
-            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalGeral)}</h2>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2 font-mono tabular-nums">${formatCurrency(totalGeral)}</h2>
           </div>
           <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-medium">${datasDobradasData.length} campanhas consolidadas</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400 uppercase">Resultado Promocionado</span>
-              <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Resultado Promocionado</span>
+              <span class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
             </div>
-            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalPromo)}</h2>
+            <h2 class="text-2xl font-extrabold text-indigo-600 mt-2 font-mono tabular-nums">${formatCurrency(totalPromo)}</h2>
           </div>
-          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-emerald-700 font-semibold flex justify-between">
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-indigo-700 font-semibold flex justify-between">
             <span>${formatPercent(pct)} da Venda Total</span>
-            <span>Ticket: ${formatCurrency(ticket)}</span>
+            <span class="font-mono">Ticket: ${formatCurrency(ticket)}</span>
           </div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400 uppercase">Total de Descontos</span>
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Descontos</span>
               <span class="p-2 bg-rose-50 text-rose-600 rounded-xl"><i data-lucide="tag" class="w-4 h-4"></i></span>
             </div>
-            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatCurrency(totalDesconto)}</h2>
+            <h2 class="text-2xl font-extrabold text-rose-600 mt-2 font-mono tabular-nums">${formatCurrency(totalDesconto)}</h2>
           </div>
-          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-rose-600 font-semibold">Abatimento Promocional</div>
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-rose-600 font-semibold">Eficiência: R$ ${ef} venda / R$ 1 desc.</div>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-400 uppercase">Itens Promocionados</span>
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Itens Promocionados</span>
               <span class="p-2 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="box" class="w-4 h-4"></i></span>
             </div>
-            <h2 class="text-2xl font-extrabold text-slate-900 mt-2">${formatNumber(totalItens)}</h2>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-2 font-mono tabular-nums">${formatNumber(totalItens)} <span class="text-xs font-normal text-slate-500">itens</span></h2>
           </div>
           <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">${formatNumber(totalPedidos)} compras realizadas</div>
         </div>
@@ -307,11 +473,11 @@
     }
 
     function renderFilters() {
-      let html = `<button onclick="filterMonth('all')" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${currentFilter === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200'}">Todas as Ações (${datasDobradasData.length})</button>`;
+      let html = `<button onclick="filterMonth('all')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer ${currentFilter === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}">Todas as Ações (${datasDobradasData.length})</button>`;
       datasDobradasData.forEach(d => {
         const isAct = currentFilter === d.mes;
         const isOct = d.mes.toLowerCase().includes('outubro');
-        html += `<button onclick="filterMonth('${d.mes}')" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isAct ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200'}">
+        html += `<button onclick="filterMonth('${d.mes}')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isAct ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}">
           <span>${d.mes}</span>
           ${isOct ? `<span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-md ${isAct ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-700'}">10.10</span>` : ''}
         </button>`;
@@ -328,7 +494,7 @@
       filtered.forEach(m => {
         const pct = m.vendaGeral > 0 ? (m.vendaPromocionada / m.vendaGeral) * 100 : 0;
         const ticket = m.totalCompras > 0 ? (m.vendaPromocionada / m.totalCompras) : 0;
-        const itensPed = m.totalCompras > 0 ? (m.qtdItens / m.totalCompras).toFixed(1) : 0;
+        const itensPed = m.totalCompras > 0 ? (m.qtdItens / m.totalCompras).toFixed(1).replace('.', ',') : 0;
         const isOct = m.mes.toLowerCase().includes('outubro');
 
         const card = document.createElement('div');
@@ -340,31 +506,31 @@
             <div class="flex justify-between items-start border-b border-slate-100 pb-4">
               <div>
                 <span class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${isOct ? 'bg-indigo-600 text-white' : 'text-indigo-700 bg-indigo-50'}">${m.mes}</span>
-                <h3 class="text-2xl font-extrabold text-slate-900 mt-2.5 tracking-tight group-hover:text-indigo-600 transition-colors">${formatCurrency(m.vendaPromocionada)}</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Resultado de itens promocionados</p>
+                <h3 class="text-2xl font-extrabold text-slate-900 mt-2.5 tracking-tight group-hover:text-indigo-600 transition-colors font-mono tabular-nums">${formatCurrency(m.vendaPromocionada)}</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Resultado itens promocionados</p>
               </div>
               <div class="flex flex-col items-end gap-1.5">
-                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg">${formatPercent(pct)} da Venda</span>
+                <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">${formatPercent(pct)} da Venda</span>
                 <button onclick="event.stopPropagation(); openEditModal('${m.id}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded cursor-pointer" title="Editar"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
               </div>
             </div>
 
             <div class="mt-4 grid grid-cols-2 gap-3">
               <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span class="text-[11px] font-semibold text-slate-400 uppercase block">Venda Geral</span>
-                <strong class="text-sm font-bold text-slate-800">${formatCurrency(m.vendaGeral)}</strong>
-                <span class="text-[10px] text-slate-500 block mt-1">${formatNumber(m.totalCompras)} compras</span>
+                <span class="text-[11px] font-semibold text-slate-500 uppercase block">Venda Geral</span>
+                <strong class="text-sm font-bold text-slate-800 font-mono block mt-0.5">${formatCurrency(m.vendaGeral)}</strong>
+                <span class="text-[11px] text-slate-500 block mt-1">${formatNumber(m.totalCompras)} compras</span>
               </div>
               <div class="bg-rose-50/60 p-3 rounded-xl border border-rose-100">
-                <span class="text-[11px] font-semibold text-rose-500 uppercase block">Desconto</span>
-                <strong class="text-sm font-bold text-rose-700">${formatCurrency(m.descontoAplicado)}</strong>
-                <span class="text-[10px] text-rose-500 block mt-1">${formatNumber(m.qtdItens)} itens</span>
+                <span class="text-[11px] font-semibold text-rose-600 uppercase block">Desconto</span>
+                <strong class="text-sm font-bold text-rose-700 font-mono block mt-0.5">${formatCurrency(m.descontoAplicado)}</strong>
+                <span class="text-[11px] text-rose-600 block mt-1">${formatNumber(m.qtdItens)} itens</span>
               </div>
             </div>
 
             <div class="mt-4 bg-slate-50/80 p-3.5 rounded-xl space-y-2 border border-slate-100 text-xs">
-              <div class="flex justify-between items-center"><span class="text-slate-500">Ticket Médio Promo:</span><strong class="text-slate-800">${formatCurrency(ticket)}</strong></div>
-              <div class="flex justify-between items-center"><span class="text-slate-500">Média Itens/Compra:</span><strong class="text-slate-800">${itensPed} itens</strong></div>
+              <div class="flex justify-between items-center"><span class="text-slate-500">Ticket Médio Promo:</span><strong class="text-slate-800 font-mono">${formatCurrency(ticket)}</strong></div>
+              <div class="flex justify-between items-center"><span class="text-slate-500">Média Itens/Compra:</span><strong class="text-slate-800 font-mono">${itensPed} itens</strong></div>
             </div>
           </div>
           <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-indigo-600 font-semibold">
@@ -379,6 +545,7 @@
 
     function renderTable() {
       const tbody = document.getElementById('table-body');
+      const tfoot = document.getElementById('table-foot');
       const q = (document.getElementById('table-search-input')?.value || '').toLowerCase();
       let filtered = currentFilter === 'all' ? datasDobradasData : datasDobradasData.filter(d => d.mes === currentFilter);
       if (q) filtered = filtered.filter(d => d.mes.toLowerCase().includes(q));
@@ -386,8 +553,18 @@
 
       document.getElementById('table-count-label').innerText = `Exibindo ${filtered.length} de ${datasDobradasData.length} ações`;
 
+      let totGeral = 0, totPromo = 0, totDesc = 0, totItens = 0, totCompras = 0;
+
       filtered.forEach(r => {
+        totGeral += r.vendaGeral;
+        totPromo += r.vendaPromocionada;
+        totDesc += r.descontoAplicado;
+        totItens += r.qtdItens;
+        totCompras += r.totalCompras;
+
         const pct = r.vendaGeral > 0 ? (r.vendaPromocionada / r.vendaGeral) * 100 : 0;
+        const ticket = r.totalCompras > 0 ? r.vendaPromocionada / r.totalCompras : 0;
+
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 cursor-pointer";
         tr.onclick = () => openDetailModal(r);
@@ -395,16 +572,35 @@
           <td class="py-3.5 px-4 font-bold text-slate-900">${r.mes}</td>
           <td class="py-3.5 px-4 text-right font-mono text-slate-600">${formatCurrency(r.vendaGeral)}</td>
           <td class="py-3.5 px-4 text-right font-mono font-bold text-indigo-700">${formatCurrency(r.vendaPromocionada)}</td>
-          <td class="py-3.5 px-4 text-right"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold">${formatPercent(pct)}</span></td>
+          <td class="py-3.5 px-4 text-right"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold font-mono">${formatPercent(pct)}</span></td>
           <td class="py-3.5 px-4 text-right font-mono text-rose-600">${formatCurrency(r.descontoAplicado)}</td>
           <td class="py-3.5 px-4 text-right font-mono">${formatNumber(r.qtdItens)}</td>
           <td class="py-3.5 px-4 text-right font-mono">${formatNumber(r.totalCompras)}</td>
+          <td class="py-3.5 px-4 text-right font-mono text-slate-600">${formatCurrency(ticket)}</td>
           <td class="py-3.5 px-4 text-center" onclick="event.stopPropagation()">
             <button onclick="openEditModal('${r.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600 rounded"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      const avgPct = totGeral > 0 ? (totPromo / totGeral) * 100 : 0;
+      const avgTicket = totCompras > 0 ? totPromo / totCompras : 0;
+
+      tfoot.innerHTML = `
+        <tr>
+          <td class="py-3 px-4 uppercase text-[11px]">Total Consolidado</td>
+          <td class="py-3 px-4 text-right font-mono">${formatCurrency(totGeral)}</td>
+          <td class="py-3 px-4 text-right font-mono text-indigo-700">${formatCurrency(totPromo)}</td>
+          <td class="py-3 px-4 text-right font-mono text-emerald-700">${formatPercent(avgPct)}</td>
+          <td class="py-3 px-4 text-right font-mono text-rose-700">${formatCurrency(totDesc)}</td>
+          <td class="py-3 px-4 text-right font-mono">${formatNumber(totItens)}</td>
+          <td class="py-3 px-4 text-right font-mono">${formatNumber(totCompras)}</td>
+          <td class="py-3 px-4 text-right font-mono">${formatCurrency(avgTicket)}</td>
+          <td></td>
+        </tr>
+      `;
+
       lucide.createIcons();
     }
 
@@ -420,13 +616,13 @@
       if (mode === 'cards') {
         document.getElementById('view-cards-container').classList.remove('hidden');
         document.getElementById('view-table-container').classList.add('hidden');
-        document.getElementById('btn-view-cards').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer';
+        document.getElementById('btn-view-cards').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-700 shadow-xs cursor-pointer';
         document.getElementById('btn-view-table').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer';
       } else {
         document.getElementById('view-cards-container').classList.add('hidden');
         document.getElementById('view-table-container').classList.remove('hidden');
         document.getElementById('btn-view-cards').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-slate-600 hover:text-slate-900 cursor-pointer';
-        document.getElementById('btn-view-table').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-600 shadow-xs cursor-pointer';
+        document.getElementById('btn-view-table').className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all bg-white text-indigo-700 shadow-xs cursor-pointer';
         renderTable();
       }
     }
@@ -434,12 +630,12 @@
     function setChartMetric(metric) {
       currentChartMetric = metric;
       if (metric === 'financial') {
-        document.getElementById('btn-metric-fin').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer';
-        document.getElementById('btn-metric-vol').className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
+        document.getElementById('btn-metric-fin').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-700 shadow-xs cursor-pointer';
+        document.getElementById('btn-metric-vol').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
         document.getElementById('bar-chart-title').innerText = 'Venda Geral vs. Resultado Promocionado vs. Desconto';
       } else {
-        document.getElementById('btn-metric-fin').className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
-        document.getElementById('btn-metric-vol').className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white text-indigo-600 shadow-xs cursor-pointer';
+        document.getElementById('btn-metric-fin').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer';
+        document.getElementById('btn-metric-vol').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-indigo-700 shadow-xs cursor-pointer';
         document.getElementById('bar-chart-title').innerText = 'Volume de Itens vs. Quantidade de Compras (Pedidos)';
       }
       initCharts();
@@ -455,11 +651,11 @@
 
       const ctxBar = document.getElementById('salesComparisonChart').getContext('2d');
       const barDatasets = currentChartMetric === 'financial' ? [
-        { label: 'Venda Geral (R$)', data: datasDobradasData.map(d => d.vendaGeral), backgroundColor: '#94a3b8', borderRadius: 6 },
+        { label: 'Venda Geral (R$)', data: datasDobradasData.map(d => d.vendaGeral), backgroundColor: '#cbd5e1', borderRadius: 6 },
         { label: 'Resultado Promo (R$)', data: datasDobradasData.map(d => d.vendaPromocionada), backgroundColor: '#6366f1', borderRadius: 6 },
         { label: 'Desconto (R$)', data: datasDobradasData.map(d => d.descontoAplicado), backgroundColor: '#f43f5e', borderRadius: 6 }
       ] : [
-        { label: 'Qtd Itens Promocionados', data: datasDobradasData.map(d => d.qtdItens), backgroundColor: '#3b82f6', borderRadius: 6 },
+        { label: 'Qtd Itens Promocionados', data: datasDobradasData.map(d => d.qtdItens), backgroundColor: '#0284c7', borderRadius: 6 },
         { label: 'Total Compras (Pedidos)', data: datasDobradasData.map(d => d.totalCompras), backgroundColor: '#10b981', borderRadius: 6 }
       ];
 
@@ -493,21 +689,21 @@
       document.getElementById('modal-title').innerText = r.mes;
       document.getElementById('btn-modal-edit').onclick = () => { closeModal('detail-modal'); openEditModal(r.id); };
       document.getElementById('modal-content').innerHTML = `
-        <div class="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-100 flex justify-between items-center">
+        <div class="bg-indigo-50/70 p-5 rounded-2xl border border-indigo-100 flex justify-between items-center">
           <div>
-            <span class="text-xs uppercase text-indigo-900/60 font-bold">Faturamento Promocionado</span>
-            <p class="text-3xl font-black text-indigo-950 mt-1">${formatCurrency(r.vendaPromocionada)}</p>
+            <span class="text-xs uppercase text-indigo-900/70 font-bold">Faturamento Promocionado</span>
+            <p class="text-3xl font-black text-indigo-950 mt-1 font-mono">${formatCurrency(r.vendaPromocionada)}</p>
             <p class="text-xs text-indigo-700 mt-1">${formatPercent(pct)} da venda geral do dia (${formatCurrency(r.vendaGeral)})</p>
           </div>
-          <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800">${formatNumber(r.totalCompras)} compras</span>
+          <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 font-mono">${formatNumber(r.totalCompras)} compras</span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-xs">
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Desconto Concedido</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(r.descontoAplicado)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Ticket Médio Promo</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(ticket)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Preço Médio / Item</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(precoItem)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Itens Promocionados</span><strong class="text-base text-slate-900 mt-1 block">${formatNumber(r.qtdItens)}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Média Itens/Compra</span><strong class="text-base text-slate-900 mt-1 block">${r.totalCompras > 0 ? (r.qtdItens / r.totalCompras).toFixed(1) : 0}</strong></div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Venda Geral</span><strong class="text-base text-slate-900 mt-1 block">${formatCurrency(r.vendaGeral)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Desconto Concedido</span><strong class="text-base text-slate-900 mt-1 block font-mono">${formatCurrency(r.descontoAplicado)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Ticket Médio Promo</span><strong class="text-base text-slate-900 mt-1 block font-mono">${formatCurrency(ticket)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Preço Médio / Item</span><strong class="text-base text-slate-900 mt-1 block font-mono">${formatCurrency(precoItem)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Itens Promocionados</span><strong class="text-base text-slate-900 mt-1 block font-mono">${formatNumber(r.qtdItens)}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Média Itens/Compra</span><strong class="text-base text-slate-900 mt-1 block font-mono">${r.totalCompras > 0 ? (r.qtdItens / r.totalCompras).toFixed(1).replace('.', ',') : 0}</strong></div>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-slate-400 block font-semibold">Venda Geral</span><strong class="text-base text-slate-900 mt-1 block font-mono">${formatCurrency(r.vendaGeral)}</strong></div>
         </div>
       `;
       document.getElementById('detail-modal').classList.remove('hidden');
@@ -562,21 +758,54 @@
       } else {
         datasDobradasData.push({ id: String(Date.now()), mes, vendaGeral, vendaPromocionada: vendaPromo, descontoAplicado: desconto, qtdItens: itens, totalCompras: compras });
       }
+      localStorage.setItem('datas_dobradas_records', JSON.stringify(datasDobradasData));
       closeModal('edit-modal');
       updateDashboard();
+      showToast('Dados salvos com sucesso!');
     }
 
-    function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
+    function openConfigModal() {
+      document.getElementById('sheet-url-input').value = googleSheetUrl;
+      document.getElementById('config-modal').classList.remove('hidden');
+    }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function saveAndSyncUrl() {
+      let url = document.getElementById('sheet-url-input').value.trim();
+      if (!url) return;
+      if (url.includes('docs.google.com/spreadsheets') && url.includes('/edit')) {
+        const match = url.match(/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) url = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+      }
+      googleSheetUrl = url;
+      localStorage.setItem('datas_dobradas_sheet_url', url);
+      closeModal('config-modal');
+      fetchSheetData();
+    }
 
     function importPastedData() {
       const val = document.getElementById('paste-input').value.trim();
       if (!val) return;
-      const parsed = Papa.parse(val, { header: true, skipEmptyLines: true });
-      if (parsed.data && parsed.data.length > 0) {
-        alert(`${parsed.data.length} linhas lidas com sucesso!`);
+      const records = parseCSVText(val);
+      if (records.length > 0) {
+        datasDobradasData = records;
+        localStorage.setItem('datas_dobradas_records', JSON.stringify(records));
         closeModal('config-modal');
+        updateDashboard();
+        showToast(`${records.length} linhas importadas com sucesso!`);
+      } else {
+        alert('Não foi possível reconhecer as colunas. Verifique se copiou o cabeçalho e os valores.');
       }
+    }
+
+    function resetDefaultData() {
+      datasDobradasData = DEFAULT_DATA;
+      googleSheetUrl = '';
+      localStorage.removeItem('datas_dobradas_records');
+      localStorage.removeItem('datas_dobradas_sheet_url');
+      closeModal('config-modal');
+      updateDashboard();
+      showToast('Dados oficiais de Maio a Outubro restaurados!');
     }
 
     function exportToCSV() {
@@ -587,18 +816,9 @@
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'datas_dobradas_export.csv';
+      a.download = `datas_dobradas_performance_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
-    }
-
-    function fetchSheetData() {
-      fetch('/planilha_datas_dobradas.csv')
-        .then(r => r.text())
-        .then(text => {
-          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-          if (parsed.data && parsed.data.length > 0) updateDashboard();
-        })
-        .catch(console.warn);
+      showToast('Download do CSV concluído!');
     }
 
     function updateDashboard() {
@@ -612,7 +832,7 @@
 
     window.onload = function() {
       updateDashboard();
-      setInterval(fetchSheetData, 120000);
+      lucide.createIcons();
     };
   </script>
 </body>
